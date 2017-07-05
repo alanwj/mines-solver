@@ -6,9 +6,11 @@
 *.swo
 
 # Output binaries and libs
+libassisted_player.a
 libmanual_player.a
 libmines.a
 libtui.a
+mines-assisted-tui
 mines-tui
 
 compat/libcompat.a
