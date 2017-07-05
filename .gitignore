@@ -1,0 +1,27 @@
+# Object files
+*.o
+
+# Vim temporary files
+*.swp
+*.swo
+
+# Output binaries and libs
+libmanual_player.a
+libmines.a
+libtui.a
+mines-tui
+
+# Autotools generated files
+.deps
+Makefile
+Makefile.in
+/aclocal.m4
+/ar-lib
+/autom4te.cache/
+/compile
+/config.log
+/config.status
+/configure
+/depcomp
+/install-sh
+/missing
