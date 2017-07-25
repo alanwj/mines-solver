@@ -6,6 +6,8 @@
 #include <limits>
 #include <ostream>
 
+#include "compat/make_unique.h"
+
 namespace mines {
 namespace tui {
 

@@ -1,12 +1,14 @@
+SUBDIRS = compat
+
 bin_PROGRAMS = mines-tui
 noinst_LIBRARIES = libmines.a libtui.a libmanual_player.a
 
-AM_CXXFLAGS = -std=c++14 -Wall -Werror -pedantic
+AM_CXXFLAGS = -Wall -Werror -pedantic
 
 mines_tui_SOURCES = \
   mines_tui.cpp
 
-mines_tui_LDADD = libmines.a libmanual_player.a libtui.a
+mines_tui_LDADD = libmines.a libmanual_player.a libtui.a compat/libcompat.a
 
 libmines_a_SOURCES = \
   mines.cpp \
@@ -22,4 +24,5 @@ libtui_a_SOURCES = \
 
 .PHONY: format
 format:
-	clang-format -style=google -i *.h *.cpp
+	find -name "*.h" -exec clang-format -style=google -i {} \+
+	find -name "*.cpp" -exec clang-format -style=google -i {} \+

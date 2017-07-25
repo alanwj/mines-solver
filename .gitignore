@@ -11,6 +11,8 @@ libmines.a
 libtui.a
 mines-tui
 
+compat/libcompat.a
+
 # Autotools generated files
 .deps
 Makefile
@@ -19,9 +21,12 @@ Makefile.in
 /ar-lib
 /autom4te.cache/
 /compile
+/config.h
+/config.h.in
 /config.log
 /config.status
 /configure
 /depcomp
 /install-sh
 /missing
+/stamp-h1

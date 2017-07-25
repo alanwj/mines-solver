@@ -3,6 +3,8 @@
 #include <cstddef>
 #include <vector>
 
+#include "compat/make_unique.h"
+
 namespace mines {
 namespace manual {
 

@@ -2,6 +2,8 @@
 
 #include <random>
 
+#include "compat/make_unique.h"
+
 namespace mines {
 
 namespace {
