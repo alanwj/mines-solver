@@ -91,6 +91,9 @@ class AssistedKnowledge : public Knowledge {
       case Event::Type::LOSS:
         cell.state = CellState::LOSING_MINE;
         break;
+      case Event::Type::QUIT:
+        // No new knowledge.
+        break;
       case Event::Type::SHOW_MINE:
         cell.state = CellState::MINE;
         break;
@@ -266,7 +269,7 @@ class AssistedPlayer : public Player {
     return actions;
   }
 
-  bool Play(Game& g, Ui& ui) final {
+  void Play(Game& g, Ui& ui) final {
     const std::size_t rows = g.GetRows();
     const std::size_t cols = g.GetCols();
 
@@ -276,9 +279,6 @@ class AssistedPlayer : public Player {
       ui.Update(k);
 
       for (const Action& action : GetActions(k, ui)) {
-        if (action.IsQuit()) {
-          return false;
-        }
         for (const Event& ev : action.Dispatch(g)) {
           k.Update(ev);
         }
@@ -286,7 +286,6 @@ class AssistedPlayer : public Player {
     }
 
     ui.Update(k);
-    return g.IsWin();
   }
 };
 

@@ -34,6 +34,9 @@ constexpr Event LossEvent(std::size_t row, std::size_t col) {
   return Event{Event::Type::LOSS, row, col, 0};
 }
 
+// Convenience function to create a Quit event.
+constexpr Event QuitEvent() { return Event{Event::Type::QUIT, 0, 0, 0}; }
+
 // Convenience function to create a SHOW_MINE event.
 constexpr Event ShowMineEvent(std::size_t row, std::size_t col) {
   return Event{Event::Type::SHOW_MINE, row, col, 0};
@@ -158,6 +161,11 @@ class GameImpl : public Game {
     return events;
   }
 
+  std::vector<Event> Quit() final {
+    state_ = State::QUIT;
+    return std::vector<Event>{QuitEvent()};
+  }
+
   std::size_t GetRows() const final { return rows_; }
 
   std::size_t GetCols() const final { return cols_; }
@@ -170,6 +178,8 @@ class GameImpl : public Game {
 
   bool IsLoss() const final { return state_ == State::LOSS; }
 
+  bool IsQuit() const final { return state_ == State::QUIT; }
+
  private:
   // Current game state.
   enum class State {
@@ -181,6 +191,9 @@ class GameImpl : public Game {
 
     // The game ended in a loss.
     LOSS,
+
+    // The game ended due to calling Quit.
+    QUIT,
   };
 
   // Calls the provided function object for each of the valid adjacent squares.
@@ -339,6 +352,7 @@ std::vector<Event> Action::Dispatch(Game& g) const {
     case Type::FLAG:
       return g.ToggleFlagged(row, col);
     case Type::QUIT:
+      return g.Quit();
     default:
       return std::vector<Event>();
   }

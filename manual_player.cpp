@@ -65,6 +65,9 @@ class BasicKnowledge : public Knowledge {
       case Event::Type::LOSS:
         cell.state = CellState::LOSING_MINE;
         break;
+      case Event::Type::QUIT:
+        // No new knowledge.
+        break;
       case Event::Type::SHOW_MINE:
         cell.state = CellState::MINE;
         break;
@@ -96,7 +99,7 @@ class ManualPlayer : public Player {
   ManualPlayer(const ManualPlayer&) = delete;
   ManualPlayer& operator=(const ManualPlayer&) = delete;
 
-  bool Play(Game& g, Ui& ui) final {
+  void Play(Game& g, Ui& ui) final {
     const std::size_t rows = g.GetRows();
     const std::size_t cols = g.GetCols();
 
@@ -106,18 +109,12 @@ class ManualPlayer : public Player {
       ui.Update(k);
 
       Action a = ui.BlockUntilAction();
-      if (a.IsQuit()) {
-        return false;
-      }
-      std::vector<Event> events = a.Dispatch(g);
-
-      for (const Event& ev : events) {
+      for (const Event& ev : a.Dispatch(g)) {
         k.Update(ev);
       }
     }
 
     ui.Update(k);
-    return g.IsWin();
   }
 };
 

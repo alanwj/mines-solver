@@ -25,6 +25,9 @@ struct Event {
     // The game was lost.
     LOSS,
 
+    // The game was quit.
+    QUIT,
+
     // A mine should be revealed. Only generated when a game is lost.
     SHOW_MINE,
   };
@@ -67,6 +70,11 @@ class Game {
   virtual std::vector<Event> ToggleFlagged(std::size_t row,
                                            std::size_t col) = 0;
 
+  // Quits the game.
+  //
+  // Returns a single Event of type QUIT.
+  virtual std::vector<Event> Quit() = 0;
+
   // Returns the number of rows in the game.
   virtual std::size_t GetRows() const = 0;
 
@@ -85,6 +93,9 @@ class Game {
 
   // Returns true if the game ended in a loss.
   virtual bool IsLoss() const = 0;
+
+  // Returns true if the game ended due to calling Quit.
+  virtual bool IsQuit() const = 0;
 };
 
 // Creates a new game.
@@ -110,9 +121,6 @@ struct Action {
     // Quit the game.
     QUIT,
   };
-
-  // Returns true if this is a quit action.
-  constexpr bool IsQuit() const { return type == Type::QUIT; }
 
   // Dispatches the action to the game.
   //
@@ -182,7 +190,7 @@ class Player {
  public:
   virtual ~Player();
 
-  virtual bool Play(Game& g, Ui& ui) = 0;
+  virtual void Play(Game& g, Ui& ui) = 0;
 };
 
 }  // namespace mines
