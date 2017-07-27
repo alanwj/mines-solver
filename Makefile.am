@@ -26,6 +26,7 @@ mines_assisted_tui_LDADD = \
   libtui.a
 
 libmines_a_SOURCES = \
+  grid.h \
   mines.cpp \
   mines.h
 

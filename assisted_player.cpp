@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "compat/make_unique.h"
+#include "grid.h"
 
 namespace mines {
 namespace assisted {
@@ -15,33 +16,30 @@ namespace {
 // A knowledge implementatin that can do simple single cell analysis.
 class AssistedKnowledge : public Knowledge {
  public:
-  AssistedKnowledge(std::size_t rows, std::size_t cols)
-      : rows_(rows), cols_(cols), cells_(rows, std::vector<Cell>(cols)) {
-    for (std::size_t r = 0; r < rows_; ++r) {
-      for (std::size_t c = 0; c < cols_; ++c) {
-        cells_[r][c].adjacent_covered = ComputeAdjacentCells(r, c);
-      }
-    }
+  AssistedKnowledge(std::size_t rows, std::size_t cols) : grid_(rows, cols) {
+    grid_.ForEach([this](std::size_t row, std::size_t col, Cell& cell) {
+      cell.adjacent_covered = ComputeAdjacentCells(row, col);
+    });
   }
 
   ~AssistedKnowledge() final = default;
 
-  std::size_t GetRows() const final { return rows_; }
+  std::size_t GetRows() const final { return grid_.GetRows(); }
 
-  std::size_t GetCols() const final { return cols_; }
+  std::size_t GetCols() const final { return grid_.GetCols(); }
 
   CellState GetState(std::size_t row, std::size_t col) const final {
-    if (!IsValid(row, col)) {
+    if (!grid_.IsValid(row, col)) {
       return CellState::UNCOVERED;
     }
-    return cells_[row][col].state;
+    return grid_(row, col).state;
   }
 
   std::size_t GetAdjacentMines(std::size_t row, std::size_t col) const final {
-    if (!IsValid(row, col)) {
+    if (!grid_.IsValid(row, col)) {
       return 0;
     }
-    return cells_[row][col].adjacent_mines;
+    return grid_(row, col).adjacent_mines;
   }
 
   // Analyzes the current state and returns a (possibly empty) set of actions to
@@ -63,10 +61,10 @@ class AssistedKnowledge : public Knowledge {
 
   // Updates player knowledge based on the event.
   void Update(const Event& ev) {
-    if (!IsValid(ev.row, ev.col)) {
+    if (!grid_.IsValid(ev.row, ev.col)) {
       return;
     }
-    Cell& cell = cells_[ev.row][ev.col];
+    Cell& cell = grid_(ev.row, ev.col);
     cell.adjacent_mines = ev.adjacent_mines;
     switch (ev.type) {
       case Event::Type::UNCOVER:
@@ -101,31 +99,11 @@ class AssistedKnowledge : public Knowledge {
   }
 
  private:
-  template <class Fn>
-  std::size_t ForEachAdjacent(std::size_t row, std::size_t col, Fn fn) const {
-    // Note: This relies on the fact that unsigned underflow is well defined.
-    std::size_t count = 0;
-    count += IsValid(row - 1, col - 1) && fn(row - 1, col - 1) ? 1 : 0;
-    count += IsValid(row - 1, col - 0) && fn(row - 1, col - 0) ? 1 : 0;
-    count += IsValid(row - 1, col + 1) && fn(row - 1, col + 1) ? 1 : 0;
-    count += IsValid(row - 0, col - 1) && fn(row - 0, col - 1) ? 1 : 0;
-    count += IsValid(row - 0, col + 1) && fn(row - 0, col + 1) ? 1 : 0;
-    count += IsValid(row + 1, col - 1) && fn(row + 1, col - 1) ? 1 : 0;
-    count += IsValid(row + 1, col - 0) && fn(row + 1, col - 0) ? 1 : 0;
-    count += IsValid(row + 1, col + 1) && fn(row + 1, col + 1) ? 1 : 0;
-    return count;
-  }
-
-  // Returns true if the row and column are valid.
-  bool IsValid(std::size_t row, std::size_t col) const {
-    return row < rows_ && col < cols_;
-  }
-
   // Updates the adjacent cells to subtract one from their adjacent_covered
   // count. This should be called in response to an UNCOVER event.
   void UpdateAdjacentCovered(std::size_t row, std::size_t col) {
-    ForEachAdjacent(row, col, [this](std::size_t row, std::size_t col) {
-      --cells_[row][col].adjacent_covered;
+    grid_.ForEachAdjacent(row, col, [this](std::size_t row, std::size_t col) {
+      --grid_(row, col).adjacent_covered;
       return false;
     });
   }
@@ -133,20 +111,17 @@ class AssistedKnowledge : public Knowledge {
   // Updates the adjacent cells to add or subtract one from their adjacent_flags
   // count. This should be called in response to a FLAG or UNFLAG event.
   void UpdateAdjacentFlags(std::size_t row, std::size_t col, bool flag) {
-    ForEachAdjacent(row, col, [this, flag](std::size_t row, std::size_t col) {
-      if (flag) {
-        ++cells_[row][col].adjacent_flags;
-      } else {
-        --cells_[row][col].adjacent_flags;
-      }
-      return false;
-    });
+    grid_.ForEachAdjacent(row, col,
+                          [this, flag](std::size_t row, std::size_t col) {
+                            grid_(row, col).adjacent_flags += flag ? 1 : -1;
+                            return false;
+                          });
   }
 
   // Queues a cell to be analyzed. Does nothing for cells that are covered or
   // have no adjacent mines.
   void QueueAnalyze(std::size_t row, std::size_t col) {
-    const Cell& cell = cells_[row][col];
+    const Cell& cell = grid_(row, col);
     if (cell.adjacent_mines != 0 && cell.state == CellState::UNCOVERED) {
       aq_.push(std::make_tuple(row, col));
     }
@@ -154,7 +129,7 @@ class AssistedKnowledge : public Knowledge {
 
   // Queues analysis of adjacent cells.
   void QueueAnalyzeAdjacent(std::size_t row, std::size_t col) {
-    ForEachAdjacent(row, col, [this](std::size_t row, std::size_t col) {
+    grid_.ForEachAdjacent(row, col, [this](std::size_t row, std::size_t col) {
       QueueAnalyze(row, col);
       return false;
     });
@@ -164,28 +139,32 @@ class AssistedKnowledge : public Knowledge {
   std::vector<Action> FlagAdjacentUncovered(std::size_t row,
                                             std::size_t col) const {
     std::vector<Action> a;
-    ForEachAdjacent(row, col, [this, &a](std::size_t row, std::size_t col) {
-      if (cells_[row][col].state == CellState::COVERED) {
-        a.push_back(Action{Action::Type::FLAG, row, col});
-      }
-      return false;
-    });
+    grid_.ForEachAdjacent(row, col,
+                          [this, &a](std::size_t row, std::size_t col) {
+                            if (grid_(row, col).state == CellState::COVERED) {
+                              a.push_back(Action{Action::Type::FLAG, row, col});
+                            }
+                            return false;
+                          });
     return a;
   }
 
   // Computes the number of adjacent cells.
   std::size_t ComputeAdjacentCells(std::size_t row, std::size_t col) const {
+    const std::size_t rows = GetRows();
+    const std::size_t cols = GetCols();
+
     std::size_t v = 8;
     if (row == 0) {
       v -= 3;
     }
-    if (row == rows_ - 1) {
+    if (row == rows - 1) {
       v -= 3;
     }
     if (col == 0) {
       v -= 3;
     }
-    if (col == cols_ - 1) {
+    if (col == cols - 1) {
       v -= 3;
     }
 
@@ -193,13 +172,13 @@ class AssistedKnowledge : public Knowledge {
     if (row == 0 && col == 0) {
       ++v;
     }
-    if (row == 0 && col == cols_ - 1) {
+    if (row == 0 && col == cols - 1) {
       ++v;
     }
-    if (row == rows_ - 1 && col == 0) {
+    if (row == rows - 1 && col == 0) {
       ++v;
     }
-    if (row == rows_ - 1 && col == cols_ - 1) {
+    if (row == rows - 1 && col == cols - 1) {
       ++v;
     }
     return v;
@@ -207,10 +186,10 @@ class AssistedKnowledge : public Knowledge {
 
   // Analyzes a cell and returns a (possibly empty) set of actions to perform.
   std::vector<Action> AnalyzeCell(std::size_t row, std::size_t col) {
-    if (!IsValid(row, col)) {
+    if (!grid_.IsValid(row, col)) {
       return std::vector<Action>();
     }
-    const Cell& cell = cells_[row][col];
+    const Cell& cell = grid_(row, col);
 
     // We only analyze cells that are uncovered with at least one adjacent mine.
     if (cell.adjacent_mines == 0 || cell.state != CellState::UNCOVERED) {
@@ -242,10 +221,7 @@ class AssistedKnowledge : public Knowledge {
     std::size_t adjacent_covered = 0;
   };
 
-  const std::size_t rows_;
-  const std::size_t cols_;
-
-  std::vector<std::vector<Cell>> cells_;
+  Grid<Cell> grid_;
 
   // The queue of cells to analyze.
   std::queue<std::tuple<std::size_t, std::size_t>> aq_;

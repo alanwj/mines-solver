@@ -3,6 +3,7 @@
 #include <random>
 
 #include "compat/make_unique.h"
+#include "grid.h"
 
 namespace mines {
 
@@ -119,22 +120,20 @@ class Cell {
 class GameImpl : public Game {
  public:
   GameImpl(std::size_t rows, std::size_t cols, std::size_t mines, unsigned seed)
-      : rows_(rows),
-        cols_(cols),
-        mines_(mines),
+      : mines_(mines),
         state_(State::PLAYING),
         remaining_covered_(rows * cols - mines),
-        cells_(rows, std::vector<Cell>(cols)) {
+        grid_(rows, cols) {
     // Assign the mines.
     std::default_random_engine g;
     g.seed(seed);
-    std::uniform_int_distribution<std::size_t> d(0, rows_ * cols_ - 1);
+    std::uniform_int_distribution<std::size_t> d(0, rows * cols - 1);
     for (std::size_t remaining_mines = mines; remaining_mines > 0;) {
       std::size_t rnd = d(g);
-      std::size_t row = rnd / cols_;
-      std::size_t col = rnd % cols_;
+      std::size_t row = rnd / cols;
+      std::size_t col = rnd % cols;
 
-      Cell& cell = cells_[row][col];
+      Cell& cell = grid_(row, col);
       if (cell.SetMine()) {
         --remaining_mines;
       }
@@ -166,9 +165,9 @@ class GameImpl : public Game {
     return std::vector<Event>{QuitEvent()};
   }
 
-  std::size_t GetRows() const final { return rows_; }
+  std::size_t GetRows() const final { return grid_.GetRows(); }
 
-  std::size_t GetCols() const final { return cols_; }
+  std::size_t GetCols() const final { return grid_.GetCols(); }
 
   std::size_t GetMines() const final { return mines_; }
 
@@ -196,32 +195,11 @@ class GameImpl : public Game {
     QUIT,
   };
 
-  // Calls the provided function object for each of the valid adjacent squares.
-  //
-  // The function should have the signature:
-  //   bool fn(std::size_t row, std::size_t col);
-  //
-  // Returns the number of function calls that returned true.
-  template <class Fn>
-  std::size_t ForEachAdjacent(std::size_t row, std::size_t col, Fn fn) const {
-    // Note: This relies on the fact that unsigned underflow is well defined.
-    std::size_t count = 0;
-    count += IsValid(row - 1, col - 1) && fn(row - 1, col - 1) ? 1 : 0;
-    count += IsValid(row - 1, col - 0) && fn(row - 1, col - 0) ? 1 : 0;
-    count += IsValid(row - 1, col + 1) && fn(row - 1, col + 1) ? 1 : 0;
-    count += IsValid(row - 0, col - 1) && fn(row - 0, col - 1) ? 1 : 0;
-    count += IsValid(row - 0, col + 1) && fn(row - 0, col + 1) ? 1 : 0;
-    count += IsValid(row + 1, col - 1) && fn(row + 1, col - 1) ? 1 : 0;
-    count += IsValid(row + 1, col - 0) && fn(row + 1, col - 0) ? 1 : 0;
-    count += IsValid(row + 1, col + 1) && fn(row + 1, col + 1) ? 1 : 0;
-    return count;
-  }
-
   void Uncover(std::size_t row, std::size_t col, std::vector<Event>& events) {
-    if (!IsPlaying() || !IsValid(row, col)) {
+    if (!IsPlaying() || !grid_.IsValid(row, col)) {
       return;
     }
-    Cell& cell = cells_[row][col];
+    Cell& cell = grid_(row, col);
 
     if (!cell.Uncover()) {
       // Cell was flagged or already uncovered.
@@ -252,10 +230,10 @@ class GameImpl : public Game {
   }
 
   void Chord(std::size_t row, std::size_t col, std::vector<Event>& events) {
-    if (!IsPlaying() || !IsValid(row, col)) {
+    if (!IsPlaying() || !grid_.IsValid(row, col)) {
       return;
     }
-    Cell& cell = cells_[row][col];
+    Cell& cell = grid_(row, col);
 
     // Cannot chord a flagged or covered cell.
     if (cell.IsFlaggedOrCovered()) {
@@ -272,66 +250,61 @@ class GameImpl : public Game {
 
   void ToggleFlagged(std::size_t row, std::size_t col,
                      std::vector<Event>& events) {
-    if (!IsPlaying() || !IsValid(row, col)) {
+    if (!IsPlaying() || !grid_.IsValid(row, col)) {
       return;
     }
-    Cell& cell = cells_[row][col];
+    Cell& cell = grid_(row, col);
     if (cell.ToggleFlagged()) {
       events.push_back(cell.IsFlagged() ? FlagEvent(row, col)
                                         : UnflagEvent(row, col));
     }
   }
 
-  // Returns true if the specified row and column are valid.
-  bool IsValid(std::size_t row, std::size_t col) const {
-    return row < rows_ && col < cols_;
-  }
-
   // Counts the number of adjacent mines.
   std::size_t CountAdjacentMines(std::size_t row, std::size_t col) const {
-    return ForEachAdjacent(row, col, [this](std::size_t row, std::size_t col) {
-      return cells_[row][col].IsMine();
-    });
+    return grid_.ForEachAdjacent(row, col,
+                                 [this](std::size_t row, std::size_t col) {
+                                   return grid_(row, col).IsMine();
+                                 });
   }
 
   // Counts the number of adjacent flagged cells.
   std::size_t CountAdjacentFlagged(std::size_t row, std::size_t col) const {
-    return ForEachAdjacent(row, col, [this](std::size_t row, std::size_t col) {
-      return cells_[row][col].IsFlagged();
-    });
+    return grid_.ForEachAdjacent(row, col,
+                                 [this](std::size_t row, std::size_t col) {
+                                   return grid_(row, col).IsFlagged();
+                                 });
   }
 
   // Recursively uncovers all adjacent cells.
   void UncoverAdjacent(std::size_t row, std::size_t col,
                        std::vector<Event>& events) {
-    ForEachAdjacent(row, col,
-                    [this, &events](std::size_t row, std::size_t col) {
-                      Uncover(row, col, events);
-                      return false;
-                    });
+    grid_.ForEachAdjacent(row, col,
+                          [this, &events](std::size_t row, std::size_t col) {
+                            Uncover(row, col, events);
+                            return false;
+                          });
   }
 
   // Generates events to show all mines, followed by a lose event at the given
   // location.
   void ShowAllMinesAndLose(std::size_t row, std::size_t col,
                            std::vector<Event>& events) {
-    for (std::size_t r = 0; r < rows_; ++r) {
-      for (std::size_t c = 0; c < cols_; ++c) {
-        if (cells_[r][c].IsMine()) {
-          events.push_back(ShowMineEvent(r, c));
-        }
-      }
-    }
+    grid_.ForEach(
+        [&events](std::size_t row, std::size_t col, const Cell& cell) {
+          if (cell.IsMine()) {
+            events.push_back(ShowMineEvent(row, col));
+          }
+        });
+
     events.push_back(LossEvent(row, col));
     state_ = State::LOSS;
   }
 
-  const std::size_t rows_;
-  const std::size_t cols_;
   const std::size_t mines_;
   State state_;
   std::size_t remaining_covered_;
-  std::vector<std::vector<Cell>> cells_;
+  Grid<Cell> grid_;
 };
 
 }  // namespace
@@ -355,6 +328,9 @@ std::vector<Event> Game::Execute(const Action& action) {
 
 std::unique_ptr<Game> NewGame(std::size_t rows, std::size_t cols,
                               std::size_t mines, unsigned seed) {
+  if (rows == 0 || cols == 0 || mines > rows * cols) {
+    return nullptr;
+  }
   return std::make_unique<GameImpl>(rows, cols, mines, seed);
 }
 

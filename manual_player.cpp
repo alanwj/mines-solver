@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "compat/make_unique.h"
+#include "grid.h"
 
 namespace mines {
 namespace manual {
@@ -14,40 +15,34 @@ namespace {
 // display.
 class BasicKnowledge : public Knowledge {
  public:
-  BasicKnowledge(std::size_t rows, std::size_t cols)
-      : rows_(rows), cols_(cols), cells_(rows, std::vector<Cell>(cols)) {}
+  BasicKnowledge(std::size_t rows, std::size_t cols) : grid_(rows, cols) {}
 
   ~BasicKnowledge() final = default;
 
-  std::size_t GetRows() const final { return rows_; }
+  std::size_t GetRows() const final { return grid_.GetRows(); }
 
-  std::size_t GetCols() const final { return cols_; }
+  std::size_t GetCols() const final { return grid_.GetCols(); }
 
   CellState GetState(std::size_t row, std::size_t col) const final {
-    if (!IsValid(row, col)) {
+    if (!grid_.IsValid(row, col)) {
       return CellState::UNCOVERED;
     }
-    return cells_[row][col].state;
+    return grid_(row, col).state;
   }
 
   std::size_t GetAdjacentMines(std::size_t row, std::size_t col) const final {
-    if (!IsValid(row, col)) {
+    if (!grid_.IsValid(row, col)) {
       return 0;
     }
-    return cells_[row][col].adjacent_mines;
-  }
-
-  // Returns true if the row and column are valid.
-  bool IsValid(std::size_t row, std::size_t col) const {
-    return row < rows_ && col < cols_;
+    return grid_(row, col).adjacent_mines;
   }
 
   // Updates player knowledge based on the event.
   void Update(const Event& ev) {
-    if (!IsValid(ev.row, ev.col)) {
+    if (!grid_.IsValid(ev.row, ev.col)) {
       return;
     }
-    Cell& cell = cells_[ev.row][ev.col];
+    Cell& cell = grid_(ev.row, ev.col);
     cell.adjacent_mines = ev.adjacent_mines;
     switch (ev.type) {
       case Event::Type::UNCOVER:
@@ -84,10 +79,7 @@ class BasicKnowledge : public Knowledge {
     std::size_t adjacent_mines = 0;
   };
 
-  const std::size_t rows_;
-  const std::size_t cols_;
-
-  std::vector<std::vector<Cell>> cells_;
+  Grid<Cell> grid_;
 };
 
 class ManualPlayer : public Player {
