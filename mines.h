@@ -46,10 +46,37 @@ struct Event {
   std::size_t adjacent_mines;
 };
 
+// Represents the actions that may be performed in a Ui.
+struct Action {
+  enum class Type {
+    // Uncover a cell.
+    UNCOVER,
+
+    // Chord a cell.
+    CHORD,
+
+    // Toggle the flag state of a cell.
+    FLAG,
+
+    // Quit the game.
+    QUIT,
+  };
+
+  Type type;
+  std::size_t row;
+  std::size_t col;
+};
+
 // The interface through which a game is played.
 class Game {
  public:
   virtual ~Game();
+
+  // Executes the supplied action and returns the resulting events.
+  //
+  // This is a convenience function that calls the correct Game method
+  // based on the Action type.
+  std::vector<Event> Execute(const Action& action);
 
   // Attempts to uncover the specified cell.
   //
@@ -105,35 +132,6 @@ class Game {
 //   seed - Seed for the PRNG to generate the mine locations.
 std::unique_ptr<Game> NewGame(std::size_t rows, std::size_t cols,
                               std::size_t mines, unsigned seed);
-
-// Represents the actions that may be performed in a Ui.
-struct Action {
-  enum class Type {
-    // Uncover a cell.
-    UNCOVER,
-
-    // Chord a cell.
-    CHORD,
-
-    // Toggle the flag state of a cell.
-    FLAG,
-
-    // Quit the game.
-    QUIT,
-  };
-
-  // Dispatches the action to the game.
-  //
-  // This is a convenience function to be shared among player implementations.
-  //
-  // Does NOT handle the QUIT action. This action should be explicitly handled
-  // in the player implementation.
-  std::vector<Event> Dispatch(Game& g) const;
-
-  Type type;
-  std::size_t row;
-  std::size_t col;
-};
 
 // An abstract representation of a player's knowledge about the state of the
 // game.

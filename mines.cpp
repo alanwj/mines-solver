@@ -338,24 +338,24 @@ class GameImpl : public Game {
 
 Game::~Game() = default;
 
-std::unique_ptr<Game> NewGame(std::size_t rows, std::size_t cols,
-                              std::size_t mines, unsigned seed) {
-  return std::make_unique<GameImpl>(rows, cols, mines, seed);
-}
-
-std::vector<Event> Action::Dispatch(Game& g) const {
-  switch (type) {
-    case Type::UNCOVER:
-      return g.Uncover(row, col);
-    case Type::CHORD:
-      return g.Chord(row, col);
-    case Type::FLAG:
-      return g.ToggleFlagged(row, col);
-    case Type::QUIT:
-      return g.Quit();
+std::vector<Event> Game::Execute(const Action& action) {
+  switch (action.type) {
+    case Action::Type::UNCOVER:
+      return Uncover(action.row, action.col);
+    case Action::Type::CHORD:
+      return Chord(action.row, action.col);
+    case Action::Type::FLAG:
+      return ToggleFlagged(action.row, action.col);
+    case Action::Type::QUIT:
+      return Quit();
     default:
       return std::vector<Event>();
   }
+}
+
+std::unique_ptr<Game> NewGame(std::size_t rows, std::size_t cols,
+                              std::size_t mines, unsigned seed) {
+  return std::make_unique<GameImpl>(rows, cols, mines, seed);
 }
 
 Knowledge::~Knowledge() = default;

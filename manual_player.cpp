@@ -108,8 +108,8 @@ class ManualPlayer : public Player {
     while (g.IsPlaying()) {
       ui.Update(k);
 
-      Action a = ui.BlockUntilAction();
-      for (const Event& ev : a.Dispatch(g)) {
+      Action action = ui.BlockUntilAction();
+      for (const Event& ev : g.Execute(action)) {
         k.Update(ev);
       }
     }

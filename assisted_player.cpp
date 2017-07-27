@@ -279,7 +279,7 @@ class AssistedPlayer : public Player {
       ui.Update(k);
 
       for (const Action& action : GetActions(k, ui)) {
-        for (const Event& ev : action.Dispatch(g)) {
+        for (const Event& ev : g.Execute(action)) {
           k.Update(ev);
         }
       }
