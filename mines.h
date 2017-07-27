@@ -19,11 +19,11 @@ struct Event {
     // A cell was unflagged.
     UNFLAG,
 
-    // The game was lost.
-    LOSS,
-
     // The game was won.
     WIN,
+
+    // The game was lost.
+    LOSS,
 
     // A mine should be revealed. Only generated when a game is lost.
     SHOW_MINE,
@@ -80,10 +80,10 @@ class Game {
   // lost.
   virtual bool IsPlaying() const = 0;
 
-  // Returns true if the game ending in a win.
+  // Returns true if the game ended in a win.
   virtual bool IsWin() const = 0;
 
-  // Returns true if the game ending in a loss.
+  // Returns true if the game ended in a loss.
   virtual bool IsLoss() const = 0;
 };
 

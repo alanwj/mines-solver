@@ -50,12 +50,6 @@ class BasicKnowledge : public Knowledge {
     Cell& cell = cells_[ev.row][ev.col];
     cell.adjacent_mines = ev.adjacent_mines;
     switch (ev.type) {
-      case Event::Type::LOSS:
-        cell.state = CellState::LOSING_MINE;
-        break;
-      case Event::Type::WIN:
-        // No new knowledge.
-        break;
       case Event::Type::UNCOVER:
         cell.state = CellState::UNCOVERED;
         break;
@@ -64,6 +58,12 @@ class BasicKnowledge : public Knowledge {
         break;
       case Event::Type::UNFLAG:
         cell.state = CellState::COVERED;
+        break;
+      case Event::Type::WIN:
+        // No new knowledge.
+        break;
+      case Event::Type::LOSS:
+        cell.state = CellState::LOSING_MINE;
         break;
       case Event::Type::SHOW_MINE:
         cell.state = CellState::MINE;

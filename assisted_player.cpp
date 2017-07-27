@@ -69,12 +69,6 @@ class AssistedKnowledge : public Knowledge {
     Cell& cell = cells_[ev.row][ev.col];
     cell.adjacent_mines = ev.adjacent_mines;
     switch (ev.type) {
-      case Event::Type::LOSS:
-        cell.state = CellState::LOSING_MINE;
-        break;
-      case Event::Type::WIN:
-        // No new knowledge.
-        break;
       case Event::Type::UNCOVER:
         cell.state = CellState::UNCOVERED;
         UpdateAdjacentCovered(ev.row, ev.col);
@@ -90,6 +84,12 @@ class AssistedKnowledge : public Knowledge {
         cell.state = CellState::COVERED;
         UpdateAdjacentFlags(ev.row, ev.col, false);
         QueueAnalyzeAdjacent(ev.row, ev.col);
+        break;
+      case Event::Type::WIN:
+        // No new knowledge.
+        break;
+      case Event::Type::LOSS:
+        cell.state = CellState::LOSING_MINE;
         break;
       case Event::Type::SHOW_MINE:
         cell.state = CellState::MINE;

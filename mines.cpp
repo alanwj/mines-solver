@@ -8,16 +8,6 @@ namespace mines {
 
 namespace {
 
-// Convenience function to create a LOSS event.
-constexpr Event LossEvent(std::size_t row, std::size_t col) {
-  return Event{Event::Type::LOSS, row, col, 0};
-}
-
-// Convenience function to create a WIN event.
-constexpr Event WinEvent(std::size_t row, std::size_t col) {
-  return Event{Event::Type::WIN, row, col, 0};
-}
-
 // Convenience function to create an UNCOVER event.
 constexpr Event UncoverEvent(std::size_t row, std::size_t col,
                              std::size_t adjacent_mines) {
@@ -32,6 +22,16 @@ constexpr Event FlagEvent(std::size_t row, std::size_t col) {
 // Convenience function to create an UNFLAG event.
 constexpr Event UnflagEvent(std::size_t row, std::size_t col) {
   return Event{Event::Type::UNFLAG, row, col, 0};
+}
+
+// Convenience function to create a WIN event.
+constexpr Event WinEvent(std::size_t row, std::size_t col) {
+  return Event{Event::Type::WIN, row, col, 0};
+}
+
+// Convenience function to create a LOSS event.
+constexpr Event LossEvent(std::size_t row, std::size_t col) {
+  return Event{Event::Type::LOSS, row, col, 0};
 }
 
 // Convenience function to create a SHOW_MINE event.
