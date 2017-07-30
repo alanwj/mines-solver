@@ -71,19 +71,19 @@ class Tui : public Ui {
     for (std::size_t row = 0; row < rows; ++row) {
       for (std::size_t col = 0; col < cols; ++col) {
         switch (k.GetState(row, col)) {
-          case Knowledge::CellState::UNCOVERED:
+          case CellState::UNCOVERED:
             out_ << k.GetAdjacentMines(row, col);
             break;
-          case Knowledge::CellState::COVERED:
+          case CellState::COVERED:
             out_ << '-';
             break;
-          case Knowledge::CellState::FLAGGED:
+          case CellState::FLAGGED:
             out_ << 'F';
             break;
-          case Knowledge::CellState::MINE:
+          case CellState::MINE:
             out_ << '*';
             break;
-          case Knowledge::CellState::LOSING_MINE:
+          case CellState::LOSING_MINE:
             out_ << 'X';
             break;
         }

@@ -67,6 +67,27 @@ struct Action {
   std::size_t col;
 };
 
+// Represents the states that a cell can take from a player's point of view.
+//
+// This exists primarily as a convenience so that an equivalent does not need to
+// be redefined in each place knowledge about a cell is stored.
+enum class CellState {
+  // The cell is uncovered.
+  UNCOVERED,
+
+  // The cell is covered (but not flagged).
+  COVERED,
+
+  // The cell is flagged.
+  FLAGGED,
+
+  // The cell is a mine (revealed when the game is lost).
+  MINE,
+
+  // The cell is the mine that caused a loss.
+  LOSING_MINE,
+};
+
 // The interface through which a game is played.
 class Game {
  public:
@@ -137,23 +158,6 @@ std::unique_ptr<Game> NewGame(std::size_t rows, std::size_t cols,
 // game.
 class Knowledge {
  public:
-  enum class CellState {
-    // The cell is uncovered.
-    UNCOVERED,
-
-    // The cell is covered (but not flagged).
-    COVERED,
-
-    // The cell is flagged.
-    FLAGGED,
-
-    // The cell is a mine (revealed when the game is lost).
-    MINE,
-
-    // The cell is the mine that caused a loss.
-    LOSING_MINE,
-  };
-
   virtual ~Knowledge();
 
   // Returns the number of rows.
