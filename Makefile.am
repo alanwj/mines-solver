@@ -1,7 +1,7 @@
 SUBDIRS = compat
 
 bin_PROGRAMS = mines-tui mines-assisted-tui
-noinst_LIBRARIES = libmines.a libtui.a libmanual_player.a libassisted_player.a
+noinst_LIBRARIES = libmines.a
 
 AM_CXXFLAGS = -Wall -Werror -pedantic
 
@@ -12,35 +12,26 @@ mines_tui_SOURCES = \
 
 mines_tui_LDADD = \
   $(COMMON_LDADD) \
-  libmines.a \
-  libmanual_player.a \
-  libtui.a
+  libmines.a
 
 mines_assisted_tui_SOURCES = \
   mines_assisted_tui.cpp
 
 mines_assisted_tui_LDADD = \
   $(COMMON_LDADD) \
-  libmines.a \
-  libassisted_player.a \
-  libtui.a
+  libmines.a
 
 libmines_a_SOURCES = \
   grid.h \
   mines.cpp \
-  mines.h
-
-libmanual_player_a_SOURCES = \
-  manual_player.cpp \
-  manual_player.h
-
-libassisted_player_a_SOURCES = \
-  assisted_player.cpp \
-  assisted_player.h
-
-libtui_a_SOURCES = \
-  tui.cpp \
-  tui.h
+  mines.h \
+  nop_solver.cpp \
+  nop_solver.h \
+  single_cell_solver.cpp \
+  single_cell_solver.h \
+  solver.h \
+  text_ui.cpp \
+  text_ui.h
 
 .PHONY: format
 format:

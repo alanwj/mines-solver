@@ -309,8 +309,6 @@ class GameImpl : public Game {
 
 }  // namespace
 
-Game::~Game() = default;
-
 std::vector<Event> Game::Execute(const Action& action) {
   switch (action.type) {
     case Action::Type::UNCOVER:
@@ -333,11 +331,5 @@ std::unique_ptr<Game> NewGame(std::size_t rows, std::size_t cols,
   }
   return std::make_unique<GameImpl>(rows, cols, mines, seed);
 }
-
-Knowledge::~Knowledge() = default;
-
-Ui::~Ui() = default;
-
-Player::~Player() = default;
 
 }  // namespace mines

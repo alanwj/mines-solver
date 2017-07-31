@@ -4,21 +4,16 @@
 #include <iostream>
 #include <memory>
 
-#include "manual_player.h"
 #include "mines.h"
-#include "tui.h"
+#include "nop_solver.h"
+#include "text_ui.h"
 
 int main() {
   auto game = mines::NewGame(9, 9, 10, std::time(nullptr));
-  auto ui = mines::tui::NewUi(std::cin, std::cout);
-  auto player = mines::manual::NewPlayer();
-  player->Play(*game, *ui);
+  auto solver = mines::solver::nop::New();
+  auto ui = mines::ui::NewTextUi(std::cin, std::cout);
 
-  if (game->IsWin()) {
-    std::cout << "You win!\n\n";
-  } else if (game->IsLoss()) {
-    std::cout << "You lose.\n\n";
-  }
+  ui->Play(*game, *solver);
 
   return 0;
 }

@@ -91,7 +91,7 @@ enum class CellState {
 // The interface through which a game is played.
 class Game {
  public:
-  virtual ~Game();
+  virtual ~Game() = default;
 
   // Executes the supplied action and returns the resulting events.
   //
@@ -153,47 +153,6 @@ class Game {
 //   seed - Seed for the PRNG to generate the mine locations.
 std::unique_ptr<Game> NewGame(std::size_t rows, std::size_t cols,
                               std::size_t mines, unsigned seed);
-
-// An abstract representation of a player's knowledge about the state of the
-// game.
-class Knowledge {
- public:
-  virtual ~Knowledge();
-
-  // Returns the number of rows.
-  virtual std::size_t GetRows() const = 0;
-
-  // Returns the number of columns.
-  virtual std::size_t GetCols() const = 0;
-
-  // Gets the state of a particular cell.
-  virtual CellState GetState(std::size_t row, std::size_t col) const = 0;
-
-  // Gets the number of adjacent mines.
-  // This value is only meaningful if the state is UNCOVERED.
-  virtual std::size_t GetAdjacentMines(std::size_t row,
-                                       std::size_t col) const = 0;
-};
-
-// Abstract representation of a user interface.
-class Ui {
- public:
-  virtual ~Ui();
-
-  // Blocks until a action is requested.
-  virtual Action BlockUntilAction() = 0;
-
-  // Updates the UI based on the available player knowledge.
-  virtual void Update(const Knowledge& k) const = 0;
-};
-
-// Abstract representation of a player.
-class Player {
- public:
-  virtual ~Player();
-
-  virtual void Play(Game& g, Ui& ui) = 0;
-};
 
 }  // namespace mines
 
