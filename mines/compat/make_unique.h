@@ -1,5 +1,5 @@
-#ifndef MAKE_UNIQUE_H_
-#define MAKE_UNIQUE_H_
+#ifndef MINES_COMPAT_MAKE_UNIQUE_H_
+#define MINES_COMPAT_MAKE_UNIQUE_H_
 
 #include "config.h"
 
@@ -22,4 +22,4 @@ unique_ptr<T> make_unique(Args&&... args) {
 
 #endif  // HAVE_CXX14
 
-#endif  // MAKE_UNIQUE_H_
+#endif  // MINES_COMPAT_MAKE_UNIQUE_H_

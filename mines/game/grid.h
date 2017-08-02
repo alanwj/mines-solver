@@ -1,5 +1,5 @@
-#ifndef MINES_GRID_H_
-#define MINES_GRID_H_
+#ifndef MINES_GAME_GRID_H_
+#define MINES_GAME_GRID_H_
 
 #include <algorithm>
 #include <cstddef>
@@ -88,4 +88,4 @@ class Grid {
 
 }  // namespace mines
 
-#endif  // MINES_GRID_H_
+#endif  // MINES_GAME_GRID_H_

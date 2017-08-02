@@ -1,10 +1,10 @@
-#ifndef MINES_SINGLE_CELL_SOLVER_H_
-#define MINES_SINGLE_CELL_SOLVER_H_
+#ifndef MINES_SOLVER_SINGLE_CELL_H_
+#define MINES_SOLVER_SINGLE_CELL_H_
 
 #include <memory>
 
-#include "mines.h"
-#include "solver.h"
+#include "mines/game/game.h"
+#include "mines/solver/solver.h"
 
 namespace mines {
 namespace solver {
@@ -27,4 +27,4 @@ std::unique_ptr<Solver> New(const Game& game);
 }  // namespace solver
 }  // namespace mines
 
-#endif  // MINES_SINGLE_CELL_SOLVER_H_
+#endif  // MINES_SOLVER_SINGLE_CELL_H_

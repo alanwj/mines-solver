@@ -1,10 +1,10 @@
-#include "nop_solver.h"
+#include "mines/solver/nop.h"
 
 #include <utility>
 #include <vector>
 
-#include "compat/make_unique.h"
-#include "mines.h"
+#include "mines/compat/make_unique.h"
+#include "mines/game/game.h"
 
 namespace mines {
 namespace solver {

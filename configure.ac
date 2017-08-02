@@ -1,5 +1,5 @@
 AC_INIT([mines], [0.1], [alan.wayne.johnson@gmail.com])
-AM_INIT_AUTOMAKE([foreign -Wall -Werror])
+AM_INIT_AUTOMAKE([foreign subdir-objects -Wall -Werror])
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -11,5 +11,5 @@ AC_PROG_CXX
 AM_PROG_AR
 AC_PROG_RANLIB
 
-AC_CONFIG_FILES([Makefile compat/Makefile])
+AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

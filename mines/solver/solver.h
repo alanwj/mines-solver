@@ -1,9 +1,9 @@
-#ifndef MINES_SOLVER_H_
-#define MINES_SOLVER_H_
+#ifndef MINES_SOLVER_SOLVER_H_
+#define MINES_SOLVER_SOLVER_H_
 
 #include <vector>
 
-#include "mines.h"
+#include "mines/game/game.h"
 
 namespace mines {
 namespace solver {
@@ -31,4 +31,4 @@ class Solver {
 }  // namespace solver
 }  // namespace mines
 
-#endif  // MINES_SOLVER_H_
+#endif  // MINES_SOLVER_SOLVER_H_

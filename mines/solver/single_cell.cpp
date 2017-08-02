@@ -1,4 +1,4 @@
-#include "single_cell_solver.h"
+#include "mines/solver/single_cell.h"
 
 #include <cstddef>
 #include <queue>
@@ -6,8 +6,8 @@
 #include <utility>
 #include <vector>
 
-#include "compat/make_unique.h"
-#include "grid.h"
+#include "mines/compat/make_unique.h"
+#include "mines/game/grid.h"
 
 namespace mines {
 namespace solver {

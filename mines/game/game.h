@@ -1,5 +1,5 @@
-#ifndef MINES_H_
-#define MINES_H_
+#ifndef MINES_GAME_GAME_H_
+#define MINES_GAME_GAME_H_
 
 #include <cstddef>
 #include <memory>
@@ -156,4 +156,4 @@ std::unique_ptr<Game> NewGame(std::size_t rows, std::size_t cols,
 
 }  // namespace mines
 
-#endif  // MINES_H_
+#endif  // MINES_GAME_GAME_H_

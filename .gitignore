@@ -6,17 +6,13 @@
 *.swo
 
 # Output binaries and libs
-libassisted_player.a
-libmanual_player.a
-libmines.a
-libtui.a
+*.a
 mines-assisted-tui
 mines-tui
 
-compat/libcompat.a
-
 # Autotools generated files
 .deps
+.dirstamp
 Makefile
 Makefile.in
 /aclocal.m4

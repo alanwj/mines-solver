@@ -1,11 +1,11 @@
-#ifndef MINES_TEXT_UI_H_
-#define MINES_TEXT_UI_H_
+#ifndef MINES_UI_TEXT_UI_H_
+#define MINES_UI_TEXT_UI_H_
 
 #include <iosfwd>
 #include <memory>
 
-#include "mines.h"
-#include "solver.h"
+#include "mines/game/game.h"
+#include "mines/solver/solver.h"
 
 namespace mines {
 namespace ui {
@@ -29,4 +29,4 @@ std::unique_ptr<TextUi> NewTextUi(std::istream& in, std::ostream& out);
 }  // namespace ui
 }  // namespace mines
 
-#endif  // MINES_TEXT_UI_H_
+#endif  // MINES_UI_TEXT_UI_H_

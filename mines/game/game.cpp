@@ -1,9 +1,9 @@
-#include "mines.h"
+#include "mines/game/game.h"
 
 #include <random>
 
-#include "compat/make_unique.h"
-#include "grid.h"
+#include "mines/compat/make_unique.h"
+#include "mines/game/grid.h"
 
 namespace mines {
 

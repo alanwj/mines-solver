@@ -1,9 +1,9 @@
-#ifndef MINES_NOP_SOLVER_H_
-#define MINES_NOP_SOLVER_H_
+#ifndef MINES_SOLVER_NOP_H_
+#define MINES_SOLVER_NOP_H_
 
 #include <memory>
 
-#include "solver.h"
+#include "mines/solver/solver.h"
 
 namespace mines {
 namespace solver {
@@ -18,4 +18,4 @@ std::unique_ptr<Solver> New();
 }  // namespace solver
 }  // namespace mines
 
-#endif  // MINES_NOP_SOLVER_H_
+#endif  // MINES_SOLVER_NOP_H_

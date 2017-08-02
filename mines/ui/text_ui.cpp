@@ -1,11 +1,11 @@
-#include "text_ui.h"
+#include "mines/ui/text_ui.h"
 
 #include <cstddef>
 #include <iostream>
 #include <vector>
 
-#include "compat/make_unique.h"
-#include "grid.h"
+#include "mines/compat/make_unique.h"
+#include "mines/game/grid.h"
 
 namespace mines {
 namespace ui {
