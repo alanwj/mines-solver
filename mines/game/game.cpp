@@ -142,27 +142,25 @@ class GameImpl : public Game {
 
   ~GameImpl() final = default;
 
-  std::vector<Event> Uncover(std::size_t row, std::size_t col) final {
+  std::vector<Event> Execute(const Action& action) final {
     std::vector<Event> events;
-    Uncover(row, col, events);
+    switch (action.type) {
+      case Action::Type::UNCOVER:
+        Uncover(action.row, action.col, events);
+        break;
+      case Action::Type::CHORD:
+        Chord(action.row, action.col, events);
+        break;
+      case Action::Type::FLAG:
+        ToggleFlagged(action.row, action.col, events);
+        break;
+      case Action::Type::QUIT:
+        Quit(events);
+        break;
+      default:
+        break;
+    }
     return events;
-  }
-
-  std::vector<Event> Chord(std::size_t row, std::size_t col) final {
-    std::vector<Event> events;
-    Chord(row, col, events);
-    return events;
-  }
-
-  std::vector<Event> ToggleFlagged(std::size_t row, std::size_t col) final {
-    std::vector<Event> events;
-    ToggleFlagged(row, col, events);
-    return events;
-  }
-
-  std::vector<Event> Quit() final {
-    state_ = State::QUIT;
-    return std::vector<Event>{QuitEvent()};
   }
 
   std::size_t GetRows() const final { return grid_.GetRows(); }
@@ -195,6 +193,12 @@ class GameImpl : public Game {
     QUIT,
   };
 
+  // Attempts to uncover the specified cell.
+  //
+  // Does nothing if the cell is flagged or already uncovered.
+  //
+  // If the cell contains zero adjacent mines, the adjacent cells will be
+  // recursively uncovered.
   void Uncover(std::size_t row, std::size_t col, std::vector<Event>& events) {
     if (!IsPlaying() || !grid_.IsValid(row, col)) {
       return;
@@ -229,6 +233,9 @@ class GameImpl : public Game {
     }
   }
 
+  // Attempts to uncover all adjacent cells that are not flagged.
+  //
+  // Does nothing if the incorrect number of adjacent cells are flagged.
   void Chord(std::size_t row, std::size_t col, std::vector<Event>& events) {
     if (!IsPlaying() || !grid_.IsValid(row, col)) {
       return;
@@ -248,6 +255,9 @@ class GameImpl : public Game {
     UncoverAdjacent(row, col, events);
   }
 
+  // Toggles the flag on the specified cell.
+  //
+  // Does nothing if the cell is already uncovered.
   void ToggleFlagged(std::size_t row, std::size_t col,
                      std::vector<Event>& events) {
     if (!IsPlaying() || !grid_.IsValid(row, col)) {
@@ -258,6 +268,14 @@ class GameImpl : public Game {
       events.push_back(cell.IsFlagged() ? FlagEvent(row, col)
                                         : UnflagEvent(row, col));
     }
+  }
+
+  // Quits the game.
+  //
+  // Returns a single Event of type QUIT.
+  void Quit(std::vector<Event>& events) {
+    state_ = State::QUIT;
+    events.push_back(QuitEvent());
   }
 
   // Counts the number of adjacent mines.
@@ -308,21 +326,6 @@ class GameImpl : public Game {
 };
 
 }  // namespace
-
-std::vector<Event> Game::Execute(const Action& action) {
-  switch (action.type) {
-    case Action::Type::UNCOVER:
-      return Uncover(action.row, action.col);
-    case Action::Type::CHORD:
-      return Chord(action.row, action.col);
-    case Action::Type::FLAG:
-      return ToggleFlagged(action.row, action.col);
-    case Action::Type::QUIT:
-      return Quit();
-    default:
-      return std::vector<Event>();
-  }
-}
 
 std::unique_ptr<Game> NewGame(std::size_t rows, std::size_t cols,
                               std::size_t mines, unsigned seed) {

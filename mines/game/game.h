@@ -94,34 +94,7 @@ class Game {
   virtual ~Game() = default;
 
   // Executes the supplied action and returns the resulting events.
-  //
-  // This is a convenience function that calls the correct Game method
-  // based on the Action type.
-  std::vector<Event> Execute(const Action& action);
-
-  // Attempts to uncover the specified cell.
-  //
-  // Does nothing if the cell is flagged or already uncovered.
-  //
-  // If the cell contains zero adjacent mines, the adjacent cells will be
-  // recursively uncovered.
-  virtual std::vector<Event> Uncover(std::size_t row, std::size_t col) = 0;
-
-  // Attempts to uncover all adjacent cells that are not flagged.
-  //
-  // Does nothing if the incorrect number of adjacent cells are flagged.
-  virtual std::vector<Event> Chord(std::size_t row, std::size_t col) = 0;
-
-  // Toggles the flag on the specified cell.
-  //
-  // Does nothing if the cell is already uncovered.
-  virtual std::vector<Event> ToggleFlagged(std::size_t row,
-                                           std::size_t col) = 0;
-
-  // Quits the game.
-  //
-  // Returns a single Event of type QUIT.
-  virtual std::vector<Event> Quit() = 0;
+  virtual std::vector<Event> Execute(const Action& action) = 0;
 
   // Returns the number of rows in the game.
   virtual std::size_t GetRows() const = 0;
