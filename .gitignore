@@ -7,6 +7,8 @@
 
 # Output binaries and libs
 *.a
+mines-assisted-gui
+mines-gui
 mines-assisted-tui
 mines-tui
 
