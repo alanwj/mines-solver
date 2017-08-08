@@ -1,5 +1,7 @@
 #include "mines/game/game.h"
 
+#include <algorithm>
+#include <functional>
 #include <random>
 
 #include "mines/compat/make_unique.h"
@@ -121,23 +123,28 @@ class GameImpl : public Game {
  public:
   GameImpl(std::size_t rows, std::size_t cols, std::size_t mines, unsigned seed)
       : mines_(mines),
-        state_(State::PLAYING),
+        state_(State::NEW),
         remaining_covered_(rows * cols - mines),
         grid_(rows, cols) {
     // Assign the mines.
     std::default_random_engine g;
     g.seed(seed);
     std::uniform_int_distribution<std::size_t> d(0, rows * cols - 1);
-    for (std::size_t remaining_mines = mines; remaining_mines > 0;) {
-      std::size_t rnd = d(g);
-      std::size_t row = rnd / cols;
-      std::size_t col = rnd % cols;
+    auto rng = std::bind(d, g);
 
-      Cell& cell = grid_(row, col);
+    for (std::size_t remaining_mines = mines; remaining_mines > 0;) {
+      const std::size_t rnd = rng();
+      Cell& cell = grid_(rnd / cols, rnd % cols);
       if (cell.SetMine()) {
         --remaining_mines;
       }
     }
+
+    // Choose a backup cell to be a mine if the first cell uncovered is a mine.
+    do {
+      const std::size_t rnd = rng();
+      backup_cell_ = &grid_(rnd / cols, rnd % cols);
+    } while (backup_cell_->IsMine());
   }
 
   ~GameImpl() final = default;
@@ -160,6 +167,11 @@ class GameImpl : public Game {
       default:
         break;
     }
+
+    if (state_ == State::NEW) {
+      state_ = State::PLAYING;
+    }
+
     return events;
   }
 
@@ -177,9 +189,17 @@ class GameImpl : public Game {
 
   bool IsQuit() const final { return state_ == State::QUIT; }
 
+  bool IsGameOver() const {
+    return state_ == State::WIN || state_ == State::LOSS ||
+           state_ == State::QUIT;
+  }
+
  private:
   // Current game state.
   enum class State {
+    // A new game is ready but the first action has not occurred.
+    NEW,
+
     // The game is ongoing.
     PLAYING,
 
@@ -200,10 +220,14 @@ class GameImpl : public Game {
   // If the cell contains zero adjacent mines, the adjacent cells will be
   // recursively uncovered.
   void Uncover(std::size_t row, std::size_t col, std::vector<Event>& events) {
-    if (!IsPlaying() || !grid_.IsValid(row, col)) {
+    if (IsGameOver() || !grid_.IsValid(row, col)) {
       return;
     }
     Cell& cell = grid_(row, col);
+
+    if (state_ == State::NEW && cell.IsMine()) {
+      std::swap(cell, *backup_cell_);
+    }
 
     if (!cell.Uncover()) {
       // Cell was flagged or already uncovered.
@@ -237,7 +261,7 @@ class GameImpl : public Game {
   //
   // Does nothing if the incorrect number of adjacent cells are flagged.
   void Chord(std::size_t row, std::size_t col, std::vector<Event>& events) {
-    if (!IsPlaying() || !grid_.IsValid(row, col)) {
+    if (IsGameOver() || !grid_.IsValid(row, col)) {
       return;
     }
     Cell& cell = grid_(row, col);
@@ -260,7 +284,7 @@ class GameImpl : public Game {
   // Does nothing if the cell is already uncovered.
   void ToggleFlagged(std::size_t row, std::size_t col,
                      std::vector<Event>& events) {
-    if (!IsPlaying() || !grid_.IsValid(row, col)) {
+    if (IsGameOver() || !grid_.IsValid(row, col)) {
       return;
     }
     Cell& cell = grid_(row, col);
@@ -323,6 +347,7 @@ class GameImpl : public Game {
   State state_;
   std::size_t remaining_covered_;
   Grid<Cell> grid_;
+  Cell* backup_cell_;
 };
 
 }  // namespace
