@@ -7,13 +7,10 @@
 #include <utility>
 
 #include <glibmm/main.h>
-#include <gtkmm/application.h>
+#include <gtkmm/applicationwindow.h>
 #include <gtkmm/drawingarea.h>
-#include <gtkmm/window.h>
 #include <sigc++/sigc++.h>
 
-#include "mines/compat/make_unique.h"
-#include "mines/game/game.h"
 #include "mines/game/grid.h"
 
 namespace mines {
@@ -576,7 +573,7 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
 constexpr Color MineField::kFrameColor;
 
 // The main window for the game.
-class MinesWindow : public Gtk::Window {
+class MinesWindow : public Gtk::ApplicationWindow {
  public:
   static constexpr const char* kTitle = "Mines";
   static constexpr std::size_t kBorderWidth = 8;
@@ -616,27 +613,35 @@ class MinesWindow : public Gtk::Window {
   MineField field_;
 };
 
-class GtkUiImpl : public GtkUi {
+class MinesApplication : public Gtk::Application {
  public:
   static constexpr const char* kApplicationId = "com.alanwj.mines-solver";
 
-  GtkUiImpl(int& argc, char**& argv)
-      : application_(Gtk::Application::create(argc, argv, kApplicationId)) {}
-  ~GtkUiImpl() final = default;
+  MinesApplication(Game& game, solver::Solver& solver)
+      : Gtk::Application(kApplicationId), game_(game), solver_(solver) {}
 
-  void Play(Game& game, solver::Solver& solver) final {
-    MinesWindow window(game, solver);
-    application_->run(window);
+ protected:
+  void on_activate() final {
+    Gtk::Application::on_activate();
+
+    MinesWindow* window = new MinesWindow(game_, solver_);
+    add_window(*window);
+    window->signal_hide().connect(sigc::bind<MinesWindow*>(
+        sigc::mem_fun(this, &MinesApplication::OnHideWindow), window));
+    window->present();
   }
 
  private:
-  Glib::RefPtr<Gtk::Application> application_;
+  void OnHideWindow(MinesWindow* window) { delete window; }
+
+  Game& game_;
+  solver::Solver& solver_;
 };
 
 }  // namespace
 
-std::unique_ptr<GtkUi> NewGtkUi(int& argc, char**& argv) {
-  return std::make_unique<GtkUiImpl>(argc, argv);
+Glib::RefPtr<Gtk::Application> NewGtkUi(Game& game, solver::Solver& solver) {
+  return Glib::RefPtr<Gtk::Application>(new MinesApplication(game, solver));
 }
 
 }  // namespace ui
