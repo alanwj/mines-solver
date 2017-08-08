@@ -7,6 +7,27 @@
 
 namespace mines {
 
+// Represents the actions that may be performed in a Ui.
+struct Action {
+  enum class Type {
+    // Uncover a cell.
+    UNCOVER,
+
+    // Chord a cell.
+    CHORD,
+
+    // Toggle the flag state of a cell.
+    FLAG,
+
+    // Quit the game.
+    QUIT,
+  };
+
+  Type type;
+  std::size_t row;
+  std::size_t col;
+};
+
 // Events are generated in response to actions taken in a game.
 struct Event {
   enum class Type {
@@ -44,27 +65,6 @@ struct Event {
   // The number of mines in adjacent cells.
   // Only set for UNCOVERED events.
   std::size_t adjacent_mines;
-};
-
-// Represents the actions that may be performed in a Ui.
-struct Action {
-  enum class Type {
-    // Uncover a cell.
-    UNCOVER,
-
-    // Chord a cell.
-    CHORD,
-
-    // Toggle the flag state of a cell.
-    FLAG,
-
-    // Quit the game.
-    QUIT,
-  };
-
-  Type type;
-  std::size_t row;
-  std::size_t col;
 };
 
 // Represents the states that a cell can take from a player's point of view.
