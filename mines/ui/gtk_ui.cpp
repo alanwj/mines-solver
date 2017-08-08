@@ -262,7 +262,7 @@ constexpr Color CellDrawFlyweight::kLightBevelColor;
 constexpr Color CellDrawFlyweight::kDarkBevelColor;
 
 // A mine field widget.
-class MineField : public Gtk::DrawingArea {
+class MineField : public Gtk::DrawingArea, public EventSubscriber {
  public:
   // The size of the frame around the mine field.
   static constexpr std::size_t kFrameSize = 1;
@@ -291,17 +291,19 @@ class MineField : public Gtk::DrawingArea {
     add_events(Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK);
   }
 
-  // Updates the visual state based on events.
-  void Update(const std::vector<Event>& events) {
-    for (const Event& event : events) {
-      // Don't wait for events adjacent to the clicked cell.
-      if (clicked_cell_.cell != nullptr &&
-          IsAdjacentToClickedCell(event.row, event.col)) {
-        HandleEvent(event);
-      } else {
-        event_queue_.push(event);
-      }
+  // Updates the visual state based on the event.
+  //
+  // If the event is not adjacent to the last clicked cell, the event may be
+  // queued for later handling.
+  void NotifyEvent(const Event& event) final {
+    // Don't wait for events adjacent to the clicked cell.
+    if (clicked_cell_.cell != nullptr &&
+        IsAdjacentToClickedCell(event.row, event.col)) {
+      HandleEvent(event);
+    } else {
+      event_queue_.push(event);
     }
+
     if (!event_queue_.empty()) {
       // Handle the rest of the events on a timeout.
       Glib::signal_timeout().connect(
@@ -581,6 +583,9 @@ class MinesWindow : public Gtk::Window {
 
   MinesWindow(Game& game, solver::Solver& solver)
       : game_(game), solver_(solver), field_(game.GetRows(), game.GetCols()) {
+    game_.Subscribe(&solver);
+    game_.Subscribe(&field_);
+
     set_title(kTitle);
     set_border_width(kBorderWidth);
     set_position(Gtk::WIN_POS_CENTER);
@@ -596,19 +601,14 @@ class MinesWindow : public Gtk::Window {
   //
   // Executes the action, updates the mine field, and runs the solver.
   void HandleAction(Action action) {
-    std::vector<Event> events = game_.Execute(action);
-    field_.Update(events);
-    solver_.Update(events);
+    game_.Execute(action);
 
-    std::vector<Action> actions = solver_.Analyze();
-    while (!actions.empty()) {
-      for (const Action& action : actions) {
-        events = game_.Execute(action);
-        field_.Update(events);
-        solver_.Update(events);
-      }
+    // Execute all actions recommended by the solver.
+    std::vector<Action> actions;
+    do {
       actions = solver_.Analyze();
-    }
+      game_.Execute(actions);
+    } while (!actions.empty());
   }
 
   Game& game_;

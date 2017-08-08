@@ -149,13 +149,12 @@ class GameImpl : public Game {
 
   ~GameImpl() final = default;
 
-  std::vector<Event> Execute(const Action& action) final {
-    std::vector<Event> events;
-
+  void Execute(const Action& action) final {
     if (IsGameOver() || !grid_.IsValid(action.row, action.col)) {
-      return events;
+      return;
     }
 
+    std::vector<Event> events;
     switch (action.type) {
       case Action::Type::UNCOVER:
         Uncover(action.row, action.col, events);
@@ -177,7 +176,15 @@ class GameImpl : public Game {
       state_ = State::PLAYING;
     }
 
-    return events;
+    for (const Event& event : events) {
+      for (EventSubscriber* subscriber : subscribers_) {
+        subscriber->NotifyEvent(event);
+      }
+    }
+  }
+
+  void Subscribe(EventSubscriber* subscriber) final {
+    subscribers_.push_back(subscriber);
   }
 
   std::size_t GetRows() const final { return grid_.GetRows(); }
@@ -315,6 +322,7 @@ class GameImpl : public Game {
   std::size_t remaining_covered_;
   Grid<Cell> grid_;
   Cell* backup_cell_;
+  std::vector<EventSubscriber*> subscribers_;
 };
 
 }  // namespace

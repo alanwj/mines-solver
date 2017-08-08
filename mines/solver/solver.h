@@ -8,15 +8,9 @@
 namespace mines {
 namespace solver {
 
-class Solver {
+class Solver : public EventSubscriber {
  public:
   virtual ~Solver() = default;
-
-  // Updates the Solver's knowledge of the current game.
-  //
-  // Any time actions are executed, the result should be provided to the Solver
-  // via this method.
-  virtual void Update(const std::vector<Event>& events) = 0;
 
   // Recommends actions based on the Solver's current knowledge of the game.
   //

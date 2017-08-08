@@ -25,43 +25,41 @@ class SingleCellSolver : public Solver {
 
   ~SingleCellSolver() final = default;
 
-  void Update(const std::vector<Event>& events) final {
-    for (const Event& ev : events) {
-      if (!grid_.IsValid(ev.row, ev.col)) {
-        continue;
-      }
-      Cell& cell = grid_(ev.row, ev.col);
-      cell.adjacent_mines = ev.adjacent_mines;
-      switch (ev.type) {
-        case Event::Type::UNCOVER:
-          cell.state = CellState::UNCOVERED;
-          UpdateAdjacentCovered(ev.row, ev.col);
-          QueueAnalyze(ev.row, ev.col);
-          QueueAnalyzeAdjacent(ev.row, ev.col);
-          break;
-        case Event::Type::FLAG:
-          cell.state = CellState::FLAGGED;
-          UpdateAdjacentFlags(ev.row, ev.col, true);
-          QueueAnalyzeAdjacent(ev.row, ev.col);
-          break;
-        case Event::Type::UNFLAG:
-          cell.state = CellState::COVERED;
-          UpdateAdjacentFlags(ev.row, ev.col, false);
-          QueueAnalyzeAdjacent(ev.row, ev.col);
-          break;
-        case Event::Type::WIN:
-          // No new knowledge.
-          break;
-        case Event::Type::LOSS:
-          cell.state = CellState::LOSING_MINE;
-          break;
-        case Event::Type::QUIT:
-          // No new knowledge.
-          break;
-        case Event::Type::SHOW_MINE:
-          cell.state = CellState::MINE;
-          break;
-      }
+  void NotifyEvent(const Event& event) final {
+    if (!grid_.IsValid(event.row, event.col)) {
+      return;
+    }
+    Cell& cell = grid_(event.row, event.col);
+    cell.adjacent_mines = event.adjacent_mines;
+    switch (event.type) {
+      case Event::Type::UNCOVER:
+        cell.state = CellState::UNCOVERED;
+        UpdateAdjacentCovered(event.row, event.col);
+        QueueAnalyze(event.row, event.col);
+        QueueAnalyzeAdjacent(event.row, event.col);
+        break;
+      case Event::Type::FLAG:
+        cell.state = CellState::FLAGGED;
+        UpdateAdjacentFlags(event.row, event.col, true);
+        QueueAnalyzeAdjacent(event.row, event.col);
+        break;
+      case Event::Type::UNFLAG:
+        cell.state = CellState::COVERED;
+        UpdateAdjacentFlags(event.row, event.col, false);
+        QueueAnalyzeAdjacent(event.row, event.col);
+        break;
+      case Event::Type::WIN:
+        // No new knowledge.
+        break;
+      case Event::Type::LOSS:
+        cell.state = CellState::LOSING_MINE;
+        break;
+      case Event::Type::QUIT:
+        // No new knowledge.
+        break;
+      case Event::Type::SHOW_MINE:
+        cell.state = CellState::MINE;
+        break;
     }
   }
 

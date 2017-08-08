@@ -13,41 +13,39 @@ namespace ui {
 namespace {
 
 // Represents player knowledge about the current game.
-class Knowledge {
+class Knowledge : public EventSubscriber {
  public:
   Knowledge(std::size_t rows, std::size_t cols) : grid_(rows, cols) {}
 
   // Updates player knowledge based on the event.
-  void Update(const std::vector<Event>& events) {
-    for (const Event& ev : events) {
-      if (!grid_.IsValid(ev.row, ev.col)) {
-        continue;
-      }
-      Cell& cell = grid_(ev.row, ev.col);
-      cell.adjacent_mines = ev.adjacent_mines;
-      switch (ev.type) {
-        case Event::Type::UNCOVER:
-          cell.state = CellState::UNCOVERED;
-          break;
-        case Event::Type::FLAG:
-          cell.state = CellState::FLAGGED;
-          break;
-        case Event::Type::UNFLAG:
-          cell.state = CellState::COVERED;
-          break;
-        case Event::Type::WIN:
-          // No new knowledge.
-          break;
-        case Event::Type::LOSS:
-          cell.state = CellState::LOSING_MINE;
-          break;
-        case Event::Type::QUIT:
-          // No new knowledge.
-          break;
-        case Event::Type::SHOW_MINE:
-          cell.state = CellState::MINE;
-          break;
-      }
+  void NotifyEvent(const Event& event) final {
+    if (!grid_.IsValid(event.row, event.col)) {
+      return;
+    }
+    Cell& cell = grid_(event.row, event.col);
+    cell.adjacent_mines = event.adjacent_mines;
+    switch (event.type) {
+      case Event::Type::UNCOVER:
+        cell.state = CellState::UNCOVERED;
+        break;
+      case Event::Type::FLAG:
+        cell.state = CellState::FLAGGED;
+        break;
+      case Event::Type::UNFLAG:
+        cell.state = CellState::COVERED;
+        break;
+      case Event::Type::WIN:
+        // No new knowledge.
+        break;
+      case Event::Type::LOSS:
+        cell.state = CellState::LOSING_MINE;
+        break;
+      case Event::Type::QUIT:
+        // No new knowledge.
+        break;
+      case Event::Type::SHOW_MINE:
+        cell.state = CellState::MINE;
+        break;
     }
   }
 
@@ -103,13 +101,14 @@ class TextUiImpl : public TextUi {
   void Play(Game& game, solver::Solver& solver) final {
     Knowledge knowledge(game.GetRows(), game.GetCols());
 
+    game.Subscribe(&knowledge);
+    game.Subscribe(&solver);
+
     while (!game.IsGameOver()) {
       knowledge.Print(out_);
 
       for (const Action& action : GetActions(solver)) {
-        const std::vector<Event> events = game.Execute(action);
-        knowledge.Update(events);
-        solver.Update(events);
+        game.Execute(action);
       }
     }
 

@@ -88,6 +88,16 @@ enum class CellState {
   LOSING_MINE,
 };
 
+// Implementations of EventSubscriber may call Game::Subscribe to receive
+// event updates as actions are executed.
+class EventSubscriber {
+ public:
+  virtual ~EventSubscriber() = default;
+
+  // Notifies the subscriber that an event occurred.
+  virtual void NotifyEvent(const Event& event) = 0;
+};
+
 // The interface through which a game is played.
 class Game {
  public:
@@ -111,8 +121,22 @@ class Game {
 
   virtual ~Game() = default;
 
-  // Executes the supplied action and returns the resulting events.
-  virtual std::vector<Event> Execute(const Action& action) = 0;
+  // Executes the supplied action and updates all subscribers.
+  virtual void Execute(const Action& action) = 0;
+
+  // Executes all of the supplied actions.
+  //
+  // This is a convenience function that repeatedly calls the Execute method
+  // above.
+  void Execute(const std::vector<Action>& actions) {
+    for (const Action& action : actions) {
+      Execute(action);
+    }
+  }
+
+  // Subscribes the given subscriber to receive event updates when actions are
+  // executed.
+  virtual void Subscribe(EventSubscriber* subscriber) = 0;
 
   // Returns the number of rows in the game.
   virtual std::size_t GetRows() const = 0;
