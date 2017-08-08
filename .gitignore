@@ -5,8 +5,10 @@
 *.swp
 *.swo
 
-# Output binaries and libs
+# Build outputs
 *.a
+mines/ui/resources.cpp
+mines/ui/resources.h
 mines-assisted-gui
 mines-gui
 mines-assisted-tui

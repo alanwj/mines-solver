@@ -12,6 +12,7 @@
 #include <sigc++/sigc++.h>
 
 #include "mines/game/grid.h"
+#include "mines/ui/resources.h"
 
 namespace mines {
 namespace ui {
@@ -618,7 +619,9 @@ class MinesApplication : public Gtk::Application {
   static constexpr const char* kApplicationId = "com.alanwj.mines-solver";
 
   MinesApplication(Game& game, solver::Solver& solver)
-      : Gtk::Application(kApplicationId), game_(game), solver_(solver) {}
+      : Gtk::Application(kApplicationId), game_(game), solver_(solver) {
+    ui_register_resource();
+  }
 
  protected:
   void on_activate() final {
