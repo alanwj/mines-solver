@@ -91,6 +91,24 @@ enum class CellState {
 // The interface through which a game is played.
 class Game {
  public:
+  // Current game state.
+  enum class State {
+    // A new game is ready but the first action has not occurred.
+    NEW,
+
+    // The game is ongoing.
+    PLAYING,
+
+    // The game ended in a win.
+    WIN,
+
+    // The game ended in a loss.
+    LOSS,
+
+    // The game ended due to the user quitting.
+    QUIT,
+  };
+
   virtual ~Game() = default;
 
   // Executes the supplied action and returns the resulting events.
@@ -105,18 +123,14 @@ class Game {
   // Returns the number of mines in the game.
   virtual std::size_t GetMines() const = 0;
 
-  // Returns true if the game is still being played, and has not been won or
-  // lost.
-  virtual bool IsPlaying() const = 0;
+  // Returns the current game state.
+  virtual State GetState() const = 0;
 
-  // Returns true if the game ended in a win.
-  virtual bool IsWin() const = 0;
-
-  // Returns true if the game ended in a loss.
-  virtual bool IsLoss() const = 0;
-
-  // Returns true if the game ended due to calling Quit.
-  virtual bool IsQuit() const = 0;
+  // Returns true if the game is over.
+  bool IsGameOver() const {
+    const State state = GetState();
+    return state == State::WIN || state == State::LOSS || state == State::QUIT;
+  }
 };
 
 // Creates a new game.

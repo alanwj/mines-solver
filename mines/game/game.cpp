@@ -151,6 +151,11 @@ class GameImpl : public Game {
 
   std::vector<Event> Execute(const Action& action) final {
     std::vector<Event> events;
+
+    if (IsGameOver() || !grid_.IsValid(action.row, action.col)) {
+      return events;
+    }
+
     switch (action.type) {
       case Action::Type::UNCOVER:
         Uncover(action.row, action.col, events);
@@ -181,38 +186,9 @@ class GameImpl : public Game {
 
   std::size_t GetMines() const final { return mines_; }
 
-  bool IsPlaying() const final { return state_ == State::PLAYING; }
-
-  bool IsWin() const final { return state_ == State::WIN; }
-
-  bool IsLoss() const final { return state_ == State::LOSS; }
-
-  bool IsQuit() const final { return state_ == State::QUIT; }
-
-  bool IsGameOver() const {
-    return state_ == State::WIN || state_ == State::LOSS ||
-           state_ == State::QUIT;
-  }
+  State GetState() const final { return state_; }
 
  private:
-  // Current game state.
-  enum class State {
-    // A new game is ready but the first action has not occurred.
-    NEW,
-
-    // The game is ongoing.
-    PLAYING,
-
-    // The game ended in a win.
-    WIN,
-
-    // The game ended in a loss.
-    LOSS,
-
-    // The game ended due to calling Quit.
-    QUIT,
-  };
-
   // Attempts to uncover the specified cell.
   //
   // Does nothing if the cell is flagged or already uncovered.
@@ -220,9 +196,6 @@ class GameImpl : public Game {
   // If the cell contains zero adjacent mines, the adjacent cells will be
   // recursively uncovered.
   void Uncover(std::size_t row, std::size_t col, std::vector<Event>& events) {
-    if (IsGameOver() || !grid_.IsValid(row, col)) {
-      return;
-    }
     Cell& cell = grid_(row, col);
 
     if (state_ == State::NEW && cell.IsMine()) {
@@ -261,9 +234,6 @@ class GameImpl : public Game {
   //
   // Does nothing if the incorrect number of adjacent cells are flagged.
   void Chord(std::size_t row, std::size_t col, std::vector<Event>& events) {
-    if (IsGameOver() || !grid_.IsValid(row, col)) {
-      return;
-    }
     Cell& cell = grid_(row, col);
 
     // Cannot chord a flagged or covered cell.
@@ -284,9 +254,6 @@ class GameImpl : public Game {
   // Does nothing if the cell is already uncovered.
   void ToggleFlagged(std::size_t row, std::size_t col,
                      std::vector<Event>& events) {
-    if (IsGameOver() || !grid_.IsValid(row, col)) {
-      return;
-    }
     Cell& cell = grid_(row, col);
     if (cell.ToggleFlagged()) {
       events.push_back(cell.IsFlagged() ? FlagEvent(row, col)

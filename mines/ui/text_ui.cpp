@@ -103,7 +103,7 @@ class TextUiImpl : public TextUi {
   void Play(Game& game, solver::Solver& solver) final {
     Knowledge knowledge(game.GetRows(), game.GetCols());
 
-    while (game.IsPlaying()) {
+    while (!game.IsGameOver()) {
       knowledge.Print(out_);
 
       for (const Action& action : GetActions(solver)) {
@@ -115,9 +115,9 @@ class TextUiImpl : public TextUi {
 
     knowledge.Print(out_);
 
-    if (game.IsWin()) {
+    if (game.GetState() == Game::State::WIN) {
       out_ << "You win!\n\n";
-    } else if (game.IsLoss()) {
+    } else if (game.GetState() == Game::State::LOSS) {
       out_ << "You lose.\n\n";
     }
   }
