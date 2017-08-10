@@ -9,10 +9,7 @@
 *.a
 mines/ui/resources.cpp
 mines/ui/resources.h
-mines-assisted-gui
-mines-gui
-mines-assisted-tui
-mines-tui
+mines-solver
 
 # Autotools generated files
 .deps
