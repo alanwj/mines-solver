@@ -3,15 +3,22 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <ctime>
+#include <memory>
 #include <queue>
 #include <utility>
 
 #include <glibmm/main.h>
 #include <gtkmm/applicationwindow.h>
+#include <gtkmm/box.h>
+#include <gtkmm/builder.h>
 #include <gtkmm/drawingarea.h>
 #include <sigc++/sigc++.h>
 
+#include "mines/compat/make_unique.h"
+#include "mines/game/game.h"
 #include "mines/game/grid.h"
+#include "mines/solver/solver.h"
 #include "mines/ui/resources.h"
 
 namespace mines {
@@ -573,25 +580,29 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
 
 constexpr Color MineField::kFrameColor;
 
-// The main window for the game.
-class MinesWindow : public Gtk::ApplicationWindow {
+// The primary controller for a game and all of its UI elements.
+//
+// This is the top level container widget, which is destroyed and recreated on
+// each new game.
+class MinesUiContainer : public Gtk::Box {
  public:
-  static constexpr const char* kTitle = "Mines";
   static constexpr std::size_t kBorderWidth = 8;
 
-  MinesWindow(Game& game, solver::Solver& solver)
-      : game_(game), solver_(solver), field_(game.GetRows(), game.GetCols()) {
-    game_.Subscribe(&solver);
-    game_.Subscribe(&field_);
+  MinesUiContainer(std::unique_ptr<Game> game,
+                   std::unique_ptr<solver::Solver> solver)
+      : game_(std::move(game)),
+        solver_(std::move(solver)),
+        field_(game_->GetRows(), game_->GetCols()) {
+    game_->Subscribe(&field_);
+    game_->Subscribe(solver_.get());
 
-    set_title(kTitle);
     set_border_width(kBorderWidth);
-    set_position(Gtk::WIN_POS_CENTER);
 
     field_.signal_action().connect(
-        sigc::mem_fun(this, &MinesWindow::HandleAction));
-    add(field_);
-    show_all_children();
+        sigc::mem_fun(this, &MinesUiContainer::HandleAction));
+
+    field_.show();
+    pack_end(field_, true, true);
   }
 
  private:
@@ -599,35 +610,96 @@ class MinesWindow : public Gtk::ApplicationWindow {
   //
   // Executes the action, updates the mine field, and runs the solver.
   void HandleAction(Action action) {
-    game_.Execute(action);
+    game_->Execute(action);
 
     // Execute all actions recommended by the solver.
     std::vector<Action> actions;
     do {
-      actions = solver_.Analyze();
-      game_.Execute(actions);
+      actions = solver_->Analyze();
+      game_->Execute(actions);
     } while (!actions.empty());
   }
 
-  Game& game_;
-  solver::Solver& solver_;
+  std::unique_ptr<Game> game_;
+  std::unique_ptr<solver::Solver> solver_;
   MineField field_;
 };
 
+// The main window for the game.
+class MinesWindow : public Gtk::ApplicationWindow {
+ public:
+  static constexpr const char* kTitle = "Mines";
+
+  MinesWindow() : solver_algorithm_(solver::Algorithm::NONE) {
+    set_title(kTitle);
+    set_position(Gtk::WIN_POS_CENTER);
+
+    add_action("new", sigc::mem_fun(this, &MinesWindow::NewGame));
+    solver_action_ = add_action_radio_string(
+        "solver", sigc::mem_fun(this, &MinesWindow::NewSolverAlgorithm),
+        "none");
+
+    NewGame();
+  }
+
+ private:
+  // Starts a new game by destroying and recreating the top level widget.
+  void NewGame() {
+    remove();
+    auto game = mines::NewGame(16, 30, 99, std::time(nullptr));
+    auto solver = solver::New(solver_algorithm_, *game);
+    ui_container_ =
+        std::make_unique<MinesUiContainer>(std::move(game), std::move(solver));
+
+    add(*ui_container_);
+    ui_container_->show();
+  }
+
+  // Changes the solver algorithm and starts a new game.
+  void NewSolverAlgorithm(const Glib::ustring& target) {
+    solver_action_->change_state(target);
+
+    if (target == "none") {
+      solver_algorithm_ = solver::Algorithm::NONE;
+    } else if (target == "local") {
+      solver_algorithm_ = solver::Algorithm::LOCAL;
+    } else {
+      solver_algorithm_ = solver::Algorithm::NONE;
+    }
+
+    NewGame();
+  }
+
+  std::unique_ptr<MinesUiContainer> ui_container_;
+  Glib::RefPtr<Gio::SimpleAction> solver_action_;
+  solver::Algorithm solver_algorithm_;
+};
+
+// The master GTK application.
 class MinesApplication : public Gtk::Application {
  public:
   static constexpr const char* kApplicationId = "com.alanwj.mines-solver";
+  static constexpr const char* kMenuResourcePath =
+      "/com/alanwj/mines-solver/menu.ui";
 
-  MinesApplication(Game& game, solver::Solver& solver)
-      : Gtk::Application(kApplicationId), game_(game), solver_(solver) {
-    ui_register_resource();
-  }
+  MinesApplication() : Gtk::Application(kApplicationId) {}
 
  protected:
+  void on_startup() final {
+    Gtk::Application::on_startup();
+    ui_register_resource();
+
+    builder_ = Gtk::Builder::create_from_resource(kMenuResourcePath);
+    auto menu = Glib::RefPtr<Gio::MenuModel>::cast_dynamic(
+        builder_->get_object("menu"));
+
+    set_menubar(menu);
+  }
+
   void on_activate() final {
     Gtk::Application::on_activate();
 
-    MinesWindow* window = new MinesWindow(game_, solver_);
+    MinesWindow* window = new MinesWindow();
     add_window(*window);
     window->signal_hide().connect(sigc::bind<MinesWindow*>(
         sigc::mem_fun(this, &MinesApplication::OnHideWindow), window));
@@ -637,14 +709,13 @@ class MinesApplication : public Gtk::Application {
  private:
   void OnHideWindow(MinesWindow* window) { delete window; }
 
-  Game& game_;
-  solver::Solver& solver_;
+  Glib::RefPtr<Gtk::Builder> builder_;
 };
 
 }  // namespace
 
-Glib::RefPtr<Gtk::Application> NewGtkUi(Game& game, solver::Solver& solver) {
-  return Glib::RefPtr<Gtk::Application>(new MinesApplication(game, solver));
+Glib::RefPtr<Gtk::Application> NewGtkUi() {
+  return Glib::RefPtr<Gtk::Application>(new MinesApplication());
 }
 
 }  // namespace ui

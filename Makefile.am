@@ -40,7 +40,7 @@ libgtk_ui_a_SOURCES = \
 
 libgtk_ui_a_CPPFLAGS = @GTKMM_CFLAGS@
 
-RESOURCE_FILES =
+RESOURCE_FILES = mines/ui/menu.ui
 BUILT_SOURCES += \
   mines/ui/resources.cpp \
   mines/ui/resources.h
@@ -60,8 +60,8 @@ mines_gui_SOURCES = \
 
 mines_gui_CPPFLAGS = @GTKMM_CFLAGS@
 mines_gui_LDADD = \
-  libmines.a \
   libgtk_ui.a \
+  libmines.a \
   @GTKMM_LIBS@
 
 
@@ -72,8 +72,8 @@ mines_assisted_gui_SOURCES = \
 
 mines_assisted_gui_CPPFLAGS = @GTKMM_CFLAGS@
 mines_assisted_gui_LDADD = \
-  libmines.a \
   libgtk_ui.a \
+  libmines.a \
   @GTKMM_LIBS@
 
 

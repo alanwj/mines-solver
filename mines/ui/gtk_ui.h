@@ -4,14 +4,11 @@
 #include <glibmm/refptr.h>
 #include <gtkmm/application.h>
 
-#include "mines/game/game.h"
-#include "mines/solver/solver.h"
-
 namespace mines {
 namespace ui {
 
 // Creates a new GUI.
-Glib::RefPtr<Gtk::Application> NewGtkUi(Game& game, solver::Solver& solver);
+Glib::RefPtr<Gtk::Application> NewGtkUi();
 
 }  // namespace ui
 }  // namespace mines
