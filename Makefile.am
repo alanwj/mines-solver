@@ -17,10 +17,10 @@ libmines_a_SOURCES = \
   mines/game/game.cpp \
   mines/game/game.h \
   mines/game/grid.h \
+  mines/solver/local.cpp \
+  mines/solver/local.h \
   mines/solver/nop.cpp \
   mines/solver/nop.h \
-  mines/solver/single_cell.cpp \
-  mines/solver/single_cell.h \
   mines/solver/solver.h \
   mines/ui/text_ui.cpp \
   mines/ui/text_ui.h

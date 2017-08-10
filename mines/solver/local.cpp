@@ -1,4 +1,4 @@
-#include "mines/solver/single_cell.h"
+#include "mines/solver/local.h"
 
 #include <cstddef>
 #include <queue>
@@ -11,19 +11,19 @@
 
 namespace mines {
 namespace solver {
-namespace single_cell {
+namespace local {
 
 namespace {
 
-class SingleCellSolver : public Solver {
+class LocalSolver : public Solver {
  public:
-  SingleCellSolver(const Game& game) : grid_(game.GetRows(), game.GetCols()) {
+  LocalSolver(const Game& game) : grid_(game.GetRows(), game.GetCols()) {
     grid_.ForEach([this](std::size_t row, std::size_t col, Cell& cell) {
       cell.adjacent_covered = CountAdjacentCells(row, col);
     });
   }
 
-  ~SingleCellSolver() final = default;
+  ~LocalSolver() final = default;
 
   void NotifyEvent(const Event& event) final {
     if (!grid_.IsValid(event.row, event.col)) {
@@ -181,9 +181,9 @@ class SingleCellSolver : public Solver {
 }  // namespace
 
 std::unique_ptr<Solver> New(const Game& game) {
-  return std::make_unique<SingleCellSolver>(game);
+  return std::make_unique<LocalSolver>(game);
 }
 
-}  // namespace single_cell
+}  // namespace local
 }  // namespace solver
 }  // namespace mines

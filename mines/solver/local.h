@@ -1,5 +1,5 @@
-#ifndef MINES_SOLVER_SINGLE_CELL_H_
-#define MINES_SOLVER_SINGLE_CELL_H_
+#ifndef MINES_SOLVER_LOCAL_H_
+#define MINES_SOLVER_LOCAL_H_
 
 #include <memory>
 
@@ -8,10 +8,10 @@
 
 namespace mines {
 namespace solver {
-namespace single_cell {
+namespace local {
 
-// Provides a solver that produces actions from local analysis considering a
-// single cell at a time.
+// Provides a solver that produces actions from local analysis of a cell and
+// its immediate neighbors.
 //
 // This solver is capable of:
 //  - Flagging cells when the number of uncovered adjacent cells matches the
@@ -23,8 +23,8 @@ namespace single_cell {
 // solutions that require reasoning about two or more cells simultaneously.
 std::unique_ptr<Solver> New(const Game& game);
 
-}  // namespace single_cell
+}  // namespace local
 }  // namespace solver
 }  // namespace mines
 
-#endif  // MINES_SOLVER_SINGLE_CELL_H_
+#endif  // MINES_SOLVER_LOCAL_H_
