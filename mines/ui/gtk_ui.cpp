@@ -6,8 +6,11 @@
 #include <ctime>
 #include <memory>
 #include <queue>
+#include <string>
 #include <utility>
 
+#include <gdkmm/general.h>
+#include <gdkmm/pixbuf.h>
 #include <glibmm/main.h>
 #include <gtkmm/applicationwindow.h>
 #include <gtkmm/box.h>
@@ -43,6 +46,12 @@ struct DrawingDimensions {
   std::size_t cell_size;
 };
 
+// The collection of pixbufs used in the mine field.
+struct Pixbufs {
+  Glib::RefPtr<Gdk::Pixbuf> mine;
+  Glib::RefPtr<Gdk::Pixbuf> flag;
+};
+
 // A representation of the GUI's knowledge about a cell.
 struct Cell {
   CellState state = CellState::COVERED;
@@ -57,9 +66,14 @@ struct Cell {
 class CellDrawFlyweight {
  public:
   CellDrawFlyweight(const Cairo::RefPtr<Cairo::Context>& cr,
-                    const DrawingDimensions& dim, const Cell& cell,
-                    std::size_t row, std::size_t col)
-      : cr_(cr), dim_(dim), cell_(cell), row_(row), col_(col) {}
+                    const DrawingDimensions& dim, const Pixbufs& pixbufs,
+                    const Cell& cell, std::size_t row, std::size_t col)
+      : cr_(cr),
+        dim_(dim),
+        pixbufs_(pixbufs),
+        cell_(cell),
+        row_(row),
+        col_(col) {}
 
   CellDrawFlyweight(const CellDrawFlyweight&) = delete;
   CellDrawFlyweight& operator=(const CellDrawFlyweight&) = delete;
@@ -213,47 +227,37 @@ class CellDrawFlyweight {
     cr_->stroke();
   }
 
+  // Draws the provided pixbuf in the center of the cell.
+  void DrawPixbuf(const Glib::RefPtr<Gdk::Pixbuf>& pixbuf) const {
+    cr_->save();
+    Gdk::Cairo::set_source_pixbuf(
+        cr_, pixbuf, dim_.cell_size / 2 - pixbuf->get_width() / 2,
+        dim_.cell_size / 2 - pixbuf->get_height() / 2);
+    cr_->paint();
+    cr_->restore();
+  }
+
   // Draws a cell in the FLAGGED state.
   void DrawFlagged() const {
     DrawCovered();
-
-    // TODO: Draw a proper flag.
-    SetColor({1.0, 0.0, 0.0});
-    cr_->save();
-    cr_->scale(dim_.cell_size, dim_.cell_size);
-    cr_->rectangle(.25, .25, .5, .5);
-    cr_->fill();
-    cr_->restore();
+    DrawPixbuf(pixbufs_.flag);
   }
 
   // Draws a cell in the MINE state.
   void DrawMine() const {
     DrawEmpty(kCellColor);
-
-    // TODO: Draw a proper mine.
-    SetColor({0.0, 0.0, 0.0});
-    cr_->save();
-    cr_->scale(dim_.cell_size, dim_.cell_size);
-    cr_->rectangle(.25, .25, .5, .5);
-    cr_->fill();
-    cr_->restore();
+    DrawPixbuf(pixbufs_.mine);
   }
 
   // Draws a cell in the LOSING_MINE state.
   void DrawLosingMine() const {
     DrawEmpty(kLosingMineCellColor);
-
-    // TODO: Draw a proper mine.
-    SetColor({0.0, 0.0, 0.0});
-    cr_->save();
-    cr_->scale(dim_.cell_size, dim_.cell_size);
-    cr_->rectangle(.25, .25, .5, .5);
-    cr_->fill();
-    cr_->restore();
+    DrawPixbuf(pixbufs_.mine);
   }
 
   const Cairo::RefPtr<Cairo::Context>& cr_;
   const DrawingDimensions& dim_;
+  const Pixbufs& pixbufs_;
   const Cell& cell_;
   const std::size_t row_;
   const std::size_t col_;
@@ -283,13 +287,21 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
   // uncovered.
   static constexpr unsigned int kEventTimeoutMs = 1;
 
+  static constexpr const char* kMineResourcePath =
+      "/com/alanwj/mines-solver/mine.svg";
+
+  static constexpr const char* kFlagResourcePath =
+      "/com/alanwj/mines-solver/flag.svg";
+
   MineField(std::size_t rows, std::size_t cols)
       : rows_(rows),
         cols_(cols),
         grid_(rows, cols),
-        dim_{0, 0, kCellSize * cols + 2 * kFrameSize,
-             kCellSize * rows + 2 * kFrameSize, kCellSize},
         clicked_cell_(CellRef::None()) {
+    UpdateDrawingDimensions(kCellSize * cols + 2 * kFrameSize,
+                            kCellSize * rows + 2 * kFrameSize);
+    UpdatePixbufs();
+
     set_size_request(dim_.width, dim_.height);
 
     // DrawingArea subclasses have to explicitly ask for mouse events.
@@ -323,18 +335,10 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
   sigc::signal<void, Action>& signal_action() { return signal_action_; }
 
  protected:
-  /// Recomputes the drawing dimensions.
+  // Recomputes values necessary to resize the mine field.
   bool on_configure_event(GdkEventConfigure* event) final {
-    dim_.cell_size = std::min((event->width - 2 * kFrameSize) / cols_,
-                              (event->height - 2 * kFrameSize) / rows_);
-    dim_.width = dim_.cell_size * cols_ + 2 * kFrameSize;
-    dim_.height = dim_.cell_size * rows_ + 2 * kFrameSize;
-
-    // Center the part of the drawing area we are actually using within the
-    // total available space.
-    dim_.x = event->width / 2 - dim_.width / 2;
-    dim_.y = event->height / 2 - dim_.height / 2;
-
+    UpdateDrawingDimensions(event->width, event->height);
+    UpdatePixbufs();
     return Gtk::DrawingArea::on_configure_event(event);
   }
 
@@ -354,7 +358,8 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
         cr->translate(col * dim_.cell_size + kFrameSize,
                       row * dim_.cell_size + kFrameSize);
 
-        CellDrawFlyweight flyweight(cr, dim_, grid_(row, col), row, col);
+        CellDrawFlyweight flyweight(cr, dim_, pixbufs_, grid_(row, col), row,
+                                    col);
         flyweight.Draw();
 
         cr->restore();
@@ -490,6 +495,31 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
     return CellRef{&grid_(row, col), row, col};
   }
 
+  // Recomputes the drawing dimensions.
+  void UpdateDrawingDimensions(int width, int height) {
+    dim_.cell_size = std::min((width - 2 * kFrameSize) / cols_,
+                              (height - 2 * kFrameSize) / rows_);
+    dim_.width = dim_.cell_size * cols_ + 2 * kFrameSize;
+    dim_.height = dim_.cell_size * rows_ + 2 * kFrameSize;
+
+    // Center the part of the drawing area we are actually using within the
+    // total available space.
+    dim_.x = width / 2 - dim_.width / 2;
+    dim_.y = height / 2 - dim_.height / 2;
+  }
+
+  // Loads a pixbuf from a resource path at current cell dimensions.
+  Glib::RefPtr<Gdk::Pixbuf> LoadPixbuf(const std::string& resource_path) const {
+    return Gdk::Pixbuf::create_from_resource(
+        resource_path, 0.7 * dim_.cell_size, 0.7 * dim_.cell_size);
+  }
+
+  // Reload all pixbufs at current cell dimensions.
+  void UpdatePixbufs() {
+    pixbufs_.mine = LoadPixbuf(kMineResourcePath);
+    pixbufs_.flag = LoadPixbuf(kFlagResourcePath);
+  }
+
   // Sets the context color.
   void SetColor(const Cairo::RefPtr<Cairo::Context>& cr,
                 const Color& color) const {
@@ -564,9 +594,13 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
   // Drawing dimensions, updated each time a "configure-event" signal is sent.
   DrawingDimensions dim_;
 
+  // Pixbufs necessary to draw the mine field.
+  Pixbufs pixbufs_;
+
   // Mouse event state tracking.
   MouseState mouse_state_;
 
+  // The most recently clicked cell.
   CellRef clicked_cell_;
 
   // Signal emitted when an action occurs.

@@ -30,7 +30,11 @@ mines_solver_CPPFLAGS = @GTKMM_CFLAGS@
 mines_solver_LDADD = @GTKMM_LIBS@
 
 
-RESOURCE_FILES = mines/ui/menu.ui
+RESOURCE_FILES = \
+  mines/ui/menu.ui \
+  mines/ui/mine.svg \
+  mines/ui/flag.svg
+
 BUILT_SOURCES = \
   mines/ui/resources.cpp \
   mines/ui/resources.h

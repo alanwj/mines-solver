@@ -2,5 +2,7 @@
 <gresources>
   <gresource prefix="/com/alanwj/mines-solver">
     <file>menu.ui</file>
+    <file>mine.svg</file>
+    <file>flag.svg</file>
   </gresource>
 </gresources>
