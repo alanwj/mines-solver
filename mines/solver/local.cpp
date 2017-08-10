@@ -54,9 +54,6 @@ class LocalSolver : public Solver {
       case Event::Type::LOSS:
         cell.state = CellState::LOSING_MINE;
         break;
-      case Event::Type::QUIT:
-        // No new knowledge.
-        break;
       case Event::Type::SHOW_MINE:
         cell.state = CellState::MINE;
         break;

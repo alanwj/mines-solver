@@ -18,9 +18,6 @@ struct Action {
 
     // Toggle the flag state of a cell.
     FLAG,
-
-    // Quit the game.
-    QUIT,
   };
 
   Type type;
@@ -45,9 +42,6 @@ struct Event {
 
     // The game was lost.
     LOSS,
-
-    // The game was quit.
-    QUIT,
 
     // A mine should be revealed. Only generated when a game is lost.
     SHOW_MINE,
@@ -114,9 +108,6 @@ class Game {
 
     // The game ended in a loss.
     LOSS,
-
-    // The game ended due to the user quitting.
-    QUIT,
   };
 
   virtual ~Game() = default;
@@ -153,7 +144,7 @@ class Game {
   // Returns true if the game is over.
   bool IsGameOver() const {
     const State state = GetState();
-    return state == State::WIN || state == State::LOSS || state == State::QUIT;
+    return state == State::WIN || state == State::LOSS;
   }
 };
 

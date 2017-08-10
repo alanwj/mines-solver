@@ -37,9 +37,6 @@ constexpr Event LossEvent(std::size_t row, std::size_t col) {
   return Event{Event::Type::LOSS, row, col, 0};
 }
 
-// Convenience function to create a Quit event.
-constexpr Event QuitEvent() { return Event{Event::Type::QUIT, 0, 0, 0}; }
-
 // Convenience function to create a SHOW_MINE event.
 constexpr Event ShowMineEvent(std::size_t row, std::size_t col) {
   return Event{Event::Type::SHOW_MINE, row, col, 0};
@@ -165,9 +162,6 @@ class GameImpl : public Game {
       case Action::Type::FLAG:
         ToggleFlagged(action.row, action.col, events);
         break;
-      case Action::Type::QUIT:
-        Quit(events);
-        break;
       default:
         break;
     }
@@ -266,14 +260,6 @@ class GameImpl : public Game {
       events.push_back(cell.IsFlagged() ? FlagEvent(row, col)
                                         : UnflagEvent(row, col));
     }
-  }
-
-  // Quits the game.
-  //
-  // Returns a single Event of type QUIT.
-  void Quit(std::vector<Event>& events) {
-    state_ = State::QUIT;
-    events.push_back(QuitEvent());
   }
 
   // Counts the number of adjacent mines.

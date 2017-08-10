@@ -537,8 +537,6 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
       case Event::Type::LOSS:
         cell.state = CellState::LOSING_MINE;
         break;
-      case Event::Type::QUIT:
-        break;
       case Event::Type::SHOW_MINE:
         cell.state = CellState::MINE;
         break;
