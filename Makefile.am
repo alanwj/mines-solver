@@ -21,6 +21,7 @@ libmines_a_SOURCES = \
   mines/solver/local.h \
   mines/solver/nop.cpp \
   mines/solver/nop.h \
+  mines/solver/solver.cpp \
   mines/solver/solver.h \
   mines/ui/text_ui.cpp \
   mines/ui/text_ui.h

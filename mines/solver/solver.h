@@ -1,12 +1,22 @@
 #ifndef MINES_SOLVER_SOLVER_H_
 #define MINES_SOLVER_SOLVER_H_
 
+#include <memory>
 #include <vector>
 
 #include "mines/game/game.h"
 
 namespace mines {
 namespace solver {
+
+// Solving algorithms.
+enum class Algorithm {
+  // Do nothing.
+  NONE,
+
+  // Perform local analysis of cells and their immediate neighbors.
+  LOCAL,
+};
 
 class Solver : public EventSubscriber {
  public:
@@ -21,6 +31,8 @@ class Solver : public EventSubscriber {
   // made.
   virtual std::vector<Action> Analyze() = 0;
 };
+
+std::unique_ptr<Solver> New(Algorithm alg, const Game& game);
 
 }  // namespace solver
 }  // namespace mines
