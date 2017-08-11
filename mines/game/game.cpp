@@ -320,7 +320,7 @@ class GameImpl : public Game {
                            std::vector<Event>& events) {
     grid_.ForEach(
         [&events](std::size_t row, std::size_t col, const Cell& cell) {
-          if (cell.IsMine()) {
+          if (cell.IsMine() && !cell.IsFlagged()) {
             events.push_back(ShowMineEvent(row, col));
           }
         });
