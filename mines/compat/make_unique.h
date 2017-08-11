@@ -1,25 +1,13 @@
 #ifndef MINES_COMPAT_MAKE_UNIQUE_H_
 #define MINES_COMPAT_MAKE_UNIQUE_H_
 
-#include "config.h"
-
-#if !HAVE_CXX14
-
 #include <memory>
 #include <utility>
 
-namespace std {
-
-// This is an implementation of make_unique, introduced in C++14.
-//
-// If the compiler supports C++14 its version will be used instead.
+// This is a rough equivalent of make_unique, introduced in C++14.
 template <typename T, typename... Args>
-unique_ptr<T> make_unique(Args&&... args) {
-  return unique_ptr<T>(new T(forward<Args>(args)...));
+std::unique_ptr<T> MakeUnique(Args&&... args) {
+  return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
-
-}  // namespace std
-
-#endif  // HAVE_CXX14
 
 #endif  // MINES_COMPAT_MAKE_UNIQUE_H_

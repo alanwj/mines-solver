@@ -318,7 +318,7 @@ std::unique_ptr<Game> NewGame(std::size_t rows, std::size_t cols,
   if (rows == 0 || cols == 0 || mines > rows * cols) {
     return nullptr;
   }
-  return std::make_unique<GameImpl>(rows, cols, mines, seed);
+  return MakeUnique<GameImpl>(rows, cols, mines, seed);
 }
 
 }  // namespace mines

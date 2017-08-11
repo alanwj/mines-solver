@@ -1,6 +1,6 @@
 bin_PROGRAMS = mines-solver
 
-AM_CXXFLAGS = -Wall -Werror -pedantic
+AM_CXXFLAGS = -std=c++11 -Wall -Werror -pedantic
 CLEANFILES = $(BUILT_SOURCES)
 
 .PHONY: format

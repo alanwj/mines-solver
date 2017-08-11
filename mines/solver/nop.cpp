@@ -1,6 +1,5 @@
 #include "mines/solver/nop.h"
 
-#include <utility>
 #include <vector>
 
 #include "mines/compat/make_unique.h"
@@ -25,7 +24,7 @@ class NopSolver : public Solver {
 
 }  // namespace
 
-std::unique_ptr<Solver> New() { return std::make_unique<NopSolver>(); }
+std::unique_ptr<Solver> New() { return MakeUnique<NopSolver>(); }
 
 }  // namespace nop
 }  // namespace solver

@@ -681,7 +681,7 @@ class MinesWindow : public Gtk::ApplicationWindow {
     auto game = mines::NewGame(16, 30, 99, std::time(nullptr));
     auto solver = solver::New(solver_algorithm_, *game);
     ui_container_ =
-        std::make_unique<MinesUiContainer>(std::move(game), std::move(solver));
+        MakeUnique<MinesUiContainer>(std::move(game), std::move(solver));
 
     add(*ui_container_);
     ui_container_->show();

@@ -3,7 +3,6 @@
 #include <cstddef>
 #include <queue>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "mines/compat/make_unique.h"
@@ -178,7 +177,7 @@ class LocalSolver : public Solver {
 }  // namespace
 
 std::unique_ptr<Solver> New(const Game& game) {
-  return std::make_unique<LocalSolver>(game);
+  return MakeUnique<LocalSolver>(game);
 }
 
 }  // namespace local
