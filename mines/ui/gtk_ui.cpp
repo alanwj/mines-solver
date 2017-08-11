@@ -18,6 +18,7 @@
 #include <gtkmm/drawingarea.h>
 #include <sigc++/sigc++.h>
 
+#include "mines/compat/gdk_pixbuf.h"
 #include "mines/compat/make_unique.h"
 #include "mines/game/game.h"
 #include "mines/game/grid.h"
@@ -509,9 +510,9 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
   }
 
   // Loads a pixbuf from a resource path at current cell dimensions.
-  Glib::RefPtr<Gdk::Pixbuf> LoadPixbuf(const std::string& resource_path) const {
-    return Gdk::Pixbuf::create_from_resource(
-        resource_path, 0.7 * dim_.cell_size, 0.7 * dim_.cell_size);
+  Glib::RefPtr<Gdk::Pixbuf> LoadPixbuf(const char* resource_path) const {
+    return compat::CreatePixbufFromResource(resource_path, 0.7 * dim_.cell_size,
+                                            0.7 * dim_.cell_size);
   }
 
   // Reload all pixbufs at current cell dimensions.

@@ -10,6 +10,8 @@ format:
 
 
 mines_solver_SOURCES = \
+  mines/compat/gdk_pixbuf.cpp \
+  mines/compat/gdk_pixbuf.h \
   mines/compat/make_unique.h \
   mines/game/game.cpp \
   mines/game/game.h \
