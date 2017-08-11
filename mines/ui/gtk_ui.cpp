@@ -83,7 +83,6 @@ class CellDrawFlyweight {
 
   void Draw() const {
     switch (cell_.state) {
-      default:
       case CellState::UNCOVERED:
         DrawUncovered();
         break;
@@ -102,6 +101,9 @@ class CellDrawFlyweight {
         break;
       case CellState::LOSING_MINE:
         DrawLosingMine();
+        break;
+      case CellState::BAD_FLAG:
+        DrawBadFlag();
         break;
     };
   }
@@ -254,6 +256,25 @@ class CellDrawFlyweight {
   void DrawLosingMine() const {
     DrawEmpty(kLosingMineCellColor);
     DrawPixbuf(pixbufs_.mine);
+  }
+
+  // Draws a cell in the BAD_FLAG state.
+  void DrawBadFlag() const {
+    DrawFlagged();
+    cr_->save();
+    SetColor({1.0, 0.0, 0.0});
+    cr_->scale(dim_.cell_size, dim_.cell_size);
+    cr_->set_line_width(.15);
+    cr_->set_line_cap(Cairo::LINE_CAP_ROUND);
+
+    const double margin = .15;
+    cr_->move_to(margin, margin);
+    cr_->line_to(1.0 - margin, 1.0 - margin);
+    cr_->move_to(margin, 1.0 - margin);
+    cr_->line_to(1.0 - margin, margin);
+    cr_->stroke();
+
+    cr_->restore();
   }
 
   const Cairo::RefPtr<Cairo::Context>& cr_;
@@ -570,8 +591,11 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
       case Event::Type::LOSS:
         cell.state = CellState::LOSING_MINE;
         break;
-      case Event::Type::SHOW_MINE:
+      case Event::Type::IDENTIFY_MINE:
         cell.state = CellState::MINE;
+        break;
+      case Event::Type::IDENTIFY_BAD_FLAG:
+        cell.state = CellState::BAD_FLAG;
         break;
     }
     queue_draw();

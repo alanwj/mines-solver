@@ -43,8 +43,11 @@ struct Event {
     // The game was lost.
     LOSS,
 
-    // A mine should be revealed. Only generated when a game is lost.
-    SHOW_MINE,
+    // Identifies a mine location. Only generated when a game is lost.
+    IDENTIFY_MINE,
+
+    // Identifies a location that was flagged but is not a mine. Only generated when a game is lost.
+    IDENTIFY_BAD_FLAG,
   };
 
   // The type of event.
@@ -80,6 +83,9 @@ enum class CellState {
 
   // The cell is the mine that caused a loss.
   LOSING_MINE,
+
+  // The cell is flagged but does not contain a mine (revealed when game is lost).
+  BAD_FLAG,
 };
 
 // Implementations of EventSubscriber may call Game::Subscribe to receive

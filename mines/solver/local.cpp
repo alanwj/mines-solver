@@ -53,8 +53,11 @@ class LocalSolver : public Solver {
       case Event::Type::LOSS:
         cell.state = CellState::LOSING_MINE;
         break;
-      case Event::Type::SHOW_MINE:
+      case Event::Type::IDENTIFY_MINE:
         cell.state = CellState::MINE;
+        break;
+      case Event::Type::IDENTIFY_BAD_FLAG:
+        cell.state = CellState::BAD_FLAG;
         break;
     }
   }

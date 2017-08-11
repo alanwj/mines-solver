@@ -39,9 +39,14 @@ constexpr Event LossEvent(std::size_t row, std::size_t col) {
   return Event{Event::Type::LOSS, row, col, 0};
 }
 
-// Convenience function to create a SHOW_MINE event.
-constexpr Event ShowMineEvent(std::size_t row, std::size_t col) {
-  return Event{Event::Type::SHOW_MINE, row, col, 0};
+// Convenience function to create an IDENTIFY_MINE event.
+constexpr Event IdentifyMineEvent(std::size_t row, std::size_t col) {
+  return Event{Event::Type::IDENTIFY_MINE, row, col, 0};
+}
+
+// Convenience function to create an IDENTIFY_BAD_FLAG event.
+constexpr Event IdentifyBadFlagEvent(std::size_t row, std::size_t col) {
+  return Event{Event::Type::IDENTIFY_BAD_FLAG, row, col, 0};
 }
 
 // A single cell in a game.
@@ -49,6 +54,12 @@ class Cell {
  public:
   // Returns true if the cell contains a mine.
   bool IsMine() const { return is_mine_; }
+
+  // Returns true if the cell is flagged.
+  bool IsFlagged() const { return state_ == State::FLAGGED; }
+
+  // Returns true if the cell is covered.
+  bool IsCovered() const { return state_ == State::COVERED; }
 
   // Sets this cell as a mine.
   //
@@ -60,12 +71,6 @@ class Cell {
     is_mine_ = true;
     return true;
   }
-
-  // Returns true if the cell is flagged.
-  bool IsFlagged() const { return state_ == State::FLAGGED; }
-
-  // Returns true if the cell is covered.
-  bool IsCovered() const { return state_ == State::COVERED; }
 
   // Toggles a cell between flagged and covered.
   //
@@ -85,11 +90,6 @@ class Cell {
       default:
         return false;
     }
-  }
-
-  // Returns true if the cell is flagged or covered.
-  bool IsFlaggedOrCovered() const {
-    return state_ == State::COVERED || state_ == State::FLAGGED;
   }
 
   // Uncovers the cell if it is covered.
@@ -218,7 +218,7 @@ class GameImpl : public Game {
     Cell& cell = grid_(row, col);
 
     // Cannot chord a flagged or covered cell.
-    if (cell.IsFlaggedOrCovered()) {
+    if (cell.IsFlagged() || cell.IsCovered()) {
       return;
     }
 
@@ -321,7 +321,10 @@ class GameImpl : public Game {
     grid_.ForEach(
         [&events](std::size_t row, std::size_t col, const Cell& cell) {
           if (cell.IsMine() && !cell.IsFlagged()) {
-            events.push_back(ShowMineEvent(row, col));
+            events.push_back(IdentifyMineEvent(row, col));
+          }
+          if (cell.IsFlagged() && !cell.IsMine()) {
+            events.push_back(IdentifyBadFlagEvent(row, col));
           }
         });
 
