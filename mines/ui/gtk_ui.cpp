@@ -319,13 +319,13 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
       HandleEvent(event);
     } else {
       event_queue_.push(event);
-    }
 
-    if (!event_queue_.empty()) {
-      // Handle the rest of the events on a timeout.
-      Glib::signal_timeout().connect(
-          sigc::mem_fun(this, &MineField::HandleEventFromQueue),
-          kEventTimeoutMs);
+      if (!timeout_connection_) {
+        // Handle the rest of the events on a timeout.
+        timeout_connection_ = Glib::signal_timeout().connect(
+            sigc::mem_fun(this, &MineField::HandleEventFromQueue),
+            kEventTimeoutMs);
+      }
     }
   }
 
@@ -536,15 +536,17 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
     cr->fill();
   }
 
-  // Updates the visual state based on the top event in the event queue.
+  // Updates the visual state based on the top several events in the event
+  // queue.
   //
   // Returns true if there are more events to handle.
   bool HandleEventFromQueue() {
-    if (event_queue_.empty()) {
-      return false;
+    // Handle 3 events at a time because 1ms is too slow for the timer but
+    // there is no way to set a submillisecond timer.
+    for (std::size_t i = 0; i < 3 && !event_queue_.empty(); ++i) {
+      HandleEvent(event_queue_.front());
+      event_queue_.pop();
     }
-    HandleEvent(event_queue_.front());
-    event_queue_.pop();
     return !event_queue_.empty();
   }
 
@@ -581,7 +583,7 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
         std::max(clicked_cell_.row, row) - std::min(clicked_cell_.row, row);
     const std::size_t delta_col =
         std::max(clicked_cell_.col, col) - std::min(clicked_cell_.col, col);
-    return delta_row <= 1 || delta_col <= 1;
+    return delta_row <= 1 && delta_col <= 1;
   }
 
   // The number of rows and columns in the mine field.
@@ -608,6 +610,9 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
 
   // Queue of events that still need to be handled.
   std::queue<Event> event_queue_;
+
+  // Connection to the timeout signal.
+  sigc::connection timeout_connection_;
 };
 
 constexpr Color MineField::kFrameColor;
