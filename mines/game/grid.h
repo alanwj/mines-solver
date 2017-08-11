@@ -75,10 +75,10 @@ class Grid {
     count += IsValid(row - 1, col - 0) && fn(row - 1, col - 0) ? 1 : 0;
     count += IsValid(row - 1, col + 1) && fn(row - 1, col + 1) ? 1 : 0;
     count += IsValid(row - 0, col - 1) && fn(row - 0, col - 1) ? 1 : 0;
-    count += IsValid(row - 0, col + 1) && fn(row - 0, col + 1) ? 1 : 0;
-    count += IsValid(row + 1, col - 1) && fn(row + 1, col - 1) ? 1 : 0;
-    count += IsValid(row + 1, col - 0) && fn(row + 1, col - 0) ? 1 : 0;
     count += IsValid(row + 1, col + 1) && fn(row + 1, col + 1) ? 1 : 0;
+    count += IsValid(row + 1, col - 0) && fn(row + 1, col - 0) ? 1 : 0;
+    count += IsValid(row + 1, col - 1) && fn(row + 1, col - 1) ? 1 : 0;
+    count += IsValid(row - 0, col + 1) && fn(row - 0, col + 1) ? 1 : 0;
     return count;
   }
 
