@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include <functional>
+#include <queue>
 #include <random>
+#include <tuple>
 
 #include "mines/compat/make_unique.h"
 #include "mines/game/grid.h"
@@ -61,6 +63,9 @@ class Cell {
 
   // Returns true if the cell is flagged.
   bool IsFlagged() const { return state_ == State::FLAGGED; }
+
+  // Returns true if the cell is covered.
+  bool IsCovered() const { return state_ == State::COVERED; }
 
   // Toggles a cell between flagged and covered.
   //
@@ -203,32 +208,7 @@ class GameImpl : public Game {
       std::swap(cell, *backup_cell_);
     }
 
-    if (!cell.Uncover()) {
-      // Cell was flagged or already uncovered.
-      return;
-    }
-
-    // If a mine was uncovered this is a loss.
-    if (cell.IsMine()) {
-      ShowAllMinesAndLose(row, col, events);
-      return;
-    }
-
-    std::size_t adjacent_mines = CountAdjacentMines(row, col);
-    events.push_back(UncoverEvent(row, col, adjacent_mines));
-    --remaining_covered_;
-
-    // If there are no more mines to uncover this is a win.
-    if (remaining_covered_ == 0) {
-      events.push_back(WinEvent(row, col));
-      state_ = State::WIN;
-      return;
-    }
-
-    // Automatically expand empty areas.
-    if (adjacent_mines == 0) {
-      UncoverAdjacent(row, col, events);
-    }
+    UncoverAdjacent(row, col, true, events);
   }
 
   // Attempts to uncover all adjacent cells that are not flagged.
@@ -247,7 +227,7 @@ class GameImpl : public Game {
       return;
     }
 
-    UncoverAdjacent(row, col, events);
+    UncoverAdjacent(row, col, false, events);
   }
 
   // Toggles the flag on the specified cell.
@@ -278,14 +258,60 @@ class GameImpl : public Game {
                                  });
   }
 
-  // Recursively uncovers all adjacent cells.
-  void UncoverAdjacent(std::size_t row, std::size_t col,
+  // Uncovers adjacent cells in a breadth first manner.
+  //
+  // If start_at_current is true, the cell identified by row and col is the
+  // first node uncovered. Otherwise the adjacent nodes are uncovered.
+  //
+  // If an uncovered cell has zero adjacent mines, its adjacent cells will also
+  // be uncovered.
+  void UncoverAdjacent(std::size_t row, std::size_t col, bool start_at_current,
                        std::vector<Event>& events) {
-    grid_.ForEachAdjacent(row, col,
-                          [this, &events](std::size_t row, std::size_t col) {
-                            Uncover(row, col, events);
-                            return false;
-                          });
+    std::queue<std::tuple<std::size_t, std::size_t>> uncover_queue;
+    auto queue_cell = [this, &uncover_queue](std::size_t row, std::size_t col) {
+      if (grid_(row, col).IsCovered()) {
+        uncover_queue.push(std::make_tuple(row, col));
+      }
+      return false;
+    };
+    if (start_at_current) {
+      uncover_queue.push(std::make_tuple(row, col));
+    } else {
+      grid_.ForEachAdjacent(row, col, queue_cell);
+    }
+
+    while (!uncover_queue.empty()) {
+      std::tie(row, col) = uncover_queue.front();
+      uncover_queue.pop();
+      Cell& cell = grid_(row, col);
+
+      if (!cell.Uncover()) {
+        // Cell was flagged or already uncovered.
+        continue;
+      }
+
+      // If a mine was uncovered this is a loss.
+      if (cell.IsMine()) {
+        ShowAllMinesAndLose(row, col, events);
+        return;
+      }
+
+      const std::size_t adjacent_mines = CountAdjacentMines(row, col);
+      events.push_back(UncoverEvent(row, col, adjacent_mines));
+      --remaining_covered_;
+
+      // If there are no more mines to uncover this is a win.
+      if (remaining_covered_ == 0) {
+        events.push_back(WinEvent(row, col));
+        state_ = State::WIN;
+        return;
+      }
+
+      // Automatically expand empty areas.
+      if (adjacent_mines == 0) {
+        grid_.ForEachAdjacent(row, col, queue_cell);
+      }
+    }
   }
 
   // Generates events to show all mines, followed by a lose event at the given
