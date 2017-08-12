@@ -6,15 +6,20 @@
 namespace mines {
 namespace solver {
 
-std::unique_ptr<Solver> New(Algorithm alg, const Game& game) {
+std::unique_ptr<Solver> New(Algorithm alg, Game& game) {
+  std::unique_ptr<Solver> solver;
   switch (alg) {
     case Algorithm::NONE:
-      return nop::New();
+      solver = nop::New();
+      break;
     case Algorithm::LOCAL:
-      return local::New(game);
+      solver = local::New(game);
+      break;
     default:
       return nullptr;
   }
+  game.Subscribe(solver.get());
+  return solver;
 }
 
 }  // namespace solver

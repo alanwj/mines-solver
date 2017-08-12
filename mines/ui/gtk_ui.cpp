@@ -698,9 +698,7 @@ class MinesWindow : public Gtk::ApplicationWindow {
   // Starts a new game.
   void NewGame() {
     game_ = mines::NewGame(16, 30, 99, std::time(nullptr));
-
     solver_ = solver::New(solver_algorithm_, *game_);
-    game_->Subscribe(solver_.get());
 
     game_->Subscribe(field_);
     field_->Reset(game_->GetRows(), game_->GetCols());

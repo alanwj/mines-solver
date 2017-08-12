@@ -32,7 +32,10 @@ class Solver : public EventSubscriber {
   virtual std::vector<Action> Analyze() = 0;
 };
 
-std::unique_ptr<Solver> New(Algorithm alg, const Game& game);
+// Creates a new solver for the specified algorithm.
+//
+// This solver will be automatically subscribed to the provided game.
+std::unique_ptr<Solver> New(Algorithm alg, Game& game);
 
 }  // namespace solver
 }  // namespace mines
