@@ -315,19 +315,36 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
   static constexpr const char* kFlagResourcePath =
       "/com/alanwj/mines-solver/flag.svg";
 
-  MineField(std::size_t rows, std::size_t cols)
-      : rows_(rows),
-        cols_(cols),
-        grid_(rows, cols),
-        clicked_cell_(CellRef::None()) {
-    UpdateDrawingDimensions(kCellSize * cols + 2 * kFrameSize,
-                            kCellSize * rows + 2 * kFrameSize);
-    UpdatePixbufs();
-
-    set_size_request(dim_.width, dim_.height);
-
+  MineField() {
     // DrawingArea subclasses have to explicitly ask for mouse events.
     add_events(Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK);
+  }
+
+  // Resets the internal state for a new game.
+  void Reset(std::size_t rows, std::size_t cols) {
+    rows_ = rows;
+    cols_ = cols;
+    grid_.Reset(rows_, cols_);
+
+    const int min_width = kCellSize * cols + 2 * kFrameSize;
+    const int min_height = kCellSize * rows + 2 * kFrameSize;
+
+    set_size_request(min_width, min_height);
+
+    UpdateDrawingDimensions(std::max(min_width, get_allocated_width()),
+                            std::max(min_height, get_allocated_height()));
+    UpdatePixbufs();
+
+    mouse_state_ = MouseState();
+    clicked_cell_ = CellRef::None();
+
+    event_queue_ = std::queue<Event>();
+
+    timeout_connection_.disconnect();
+
+    queue_draw();
+
+    // Note: Any connections to signal_action will remain valid.
   }
 
   // Updates the visual state based on the event.
@@ -618,8 +635,8 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
   }
 
   // The number of rows and columns in the mine field.
-  const std::size_t rows_;
-  const std::size_t cols_;
+  std::size_t rows_;
+  std::size_t cols_;
 
   // Knowledge about the grid of cells.
   Grid<Cell> grid_;
@@ -636,60 +653,42 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
   // The most recently clicked cell.
   CellRef clicked_cell_;
 
-  // Signal emitted when an action occurs.
-  sigc::signal<void, Action> signal_action_;
-
   // Queue of events that still need to be handled.
   std::queue<Event> event_queue_;
 
   // Connection to the timeout signal.
   sigc::connection timeout_connection_;
+
+  // Signal emitted when an action occurs.
+  sigc::signal<void, Action> signal_action_;
 };
 
 constexpr Color MineField::kFrameColor;
 
 // The primary controller for a game and all of its UI elements.
-//
-// This is the top level container widget, which is destroyed and recreated on
-// each new game.
 class MinesUiContainer : public Gtk::Box {
  public:
   static constexpr std::size_t kBorderWidth = 8;
 
-  MinesUiContainer(std::unique_ptr<Game> game,
-                   std::unique_ptr<solver::Solver> solver)
-      : game_(std::move(game)),
-        solver_(std::move(solver)),
-        field_(game_->GetRows(), game_->GetCols()) {
-    game_->Subscribe(&field_);
-    game_->Subscribe(solver_.get());
-
+  MinesUiContainer() {
     set_border_width(kBorderWidth);
-
-    field_.signal_action().connect(
-        sigc::mem_fun(this, &MinesUiContainer::HandleAction));
 
     field_.show();
     pack_end(field_, true, true);
   }
 
- private:
-  // Handles an action on the mine field.
-  //
-  // Executes the action, updates the mine field, and runs the solver.
-  void HandleAction(Action action) {
-    game_->Execute(action);
-
-    // Execute all actions recommended by the solver.
-    std::vector<Action> actions;
-    do {
-      actions = solver_->Analyze();
-      game_->Execute(actions);
-    } while (!actions.empty());
+  // Resets the internal state for a new game.
+  void Reset(Game& game) {
+    game.Subscribe(&field_);
+    field_.Reset(game.GetRows(), game.GetCols());
   }
 
-  std::unique_ptr<Game> game_;
-  std::unique_ptr<solver::Solver> solver_;
+  // The signal sent when an Action is peformed on the mine field.
+  //
+  // The action type will be one of: UNCOVER, CHORD, or FLAG.
+  sigc::signal<void, Action>& signal_action() { return field_.signal_action(); }
+
+ private:
   MineField field_;
 };
 
@@ -707,20 +706,24 @@ class MinesWindow : public Gtk::ApplicationWindow {
         "solver", sigc::mem_fun(this, &MinesWindow::NewSolverAlgorithm),
         "none");
 
+    ui_container_.signal_action().connect(
+        sigc::mem_fun(this, &MinesWindow::HandleAction));
+
+    add(ui_container_);
+    ui_container_.show();
+
     NewGame();
   }
 
  private:
-  // Starts a new game by destroying and recreating the top level widget.
+  // Starts a new game.
   void NewGame() {
-    remove();
-    auto game = mines::NewGame(16, 30, 99, std::time(nullptr));
-    auto solver = solver::New(solver_algorithm_, *game);
-    ui_container_ =
-        MakeUnique<MinesUiContainer>(std::move(game), std::move(solver));
+    game_ = mines::NewGame(16, 30, 99, std::time(nullptr));
 
-    add(*ui_container_);
-    ui_container_->show();
+    solver_ = solver::New(solver_algorithm_, *game_);
+    game_->Subscribe(solver_.get());
+
+    ui_container_.Reset(*game_);
   }
 
   // Changes the solver algorithm and starts a new game.
@@ -738,9 +741,34 @@ class MinesWindow : public Gtk::ApplicationWindow {
     NewGame();
   }
 
-  std::unique_ptr<MinesUiContainer> ui_container_;
+  // Handles an action on the mine field.
+  //
+  // Executes the action, updates the mine field, and runs the solver.
+  void HandleAction(Action action) {
+    game_->Execute(action);
+
+    // Execute all actions recommended by the solver.
+    std::vector<Action> actions;
+    do {
+      actions = solver_->Analyze();
+      game_->Execute(actions);
+    } while (!actions.empty());
+  }
+
+  // The main container for all widgets.
+  MinesUiContainer ui_container_;
+
+  // Menu action for selection the solver algorithm.
   Glib::RefPtr<Gio::SimpleAction> solver_action_;
+
+  // The algorithm used in current and new games.
   solver::Algorithm solver_algorithm_;
+
+  // The current game.
+  std::unique_ptr<Game> game_;
+
+  // The current solver.
+  std::unique_ptr<solver::Solver> solver_;
 };
 
 // The master GTK application.
