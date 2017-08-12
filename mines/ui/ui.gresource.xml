@@ -2,7 +2,11 @@
 <gresources>
   <gresource prefix="/com/alanwj/mines-solver">
     <file>mines-solver.ui</file>
-    <file>mine.svg</file>
     <file>flag.svg</file>
+    <file>mine.svg</file>
+    <file>smiley-cool.svg</file>
+    <file>smiley-cry.svg</file>
+    <file>smiley-happy.svg</file>
+    <file>smiley-scared.svg</file>
   </gresource>
 </gresources>

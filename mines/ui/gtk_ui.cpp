@@ -17,7 +17,9 @@
 #include <gtkmm/applicationwindow.h>
 #include <gtkmm/box.h>
 #include <gtkmm/builder.h>
+#include <gtkmm/button.h>
 #include <gtkmm/drawingarea.h>
+#include <gtkmm/image.h>
 #include <sigc++/sigc++.h>
 
 #include "mines/compat/gdk_pixbuf.h"
@@ -678,12 +680,112 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
 
 constexpr Color MineField::kFrameColor;
 
+// The reset (and status) button.
+//
+// This button is used to start a new game, and provide real-time feedback on
+// the game state via the image displayed.
+class ResetButton : public Gtk::Button, public EventSubscriber {
+ public:
+  ResetButton(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>&)
+      : Gtk::Button(cobj),
+        smiley_happy_(CreateSmiley(kSmileyHappyResourcePath)),
+        smiley_cry_(CreateSmiley(kSmileyCryResourcePath)),
+        smiley_cool_(CreateSmiley(kSmileyCoolResourcePath)),
+        smiley_scared_(CreateSmiley(kSmileyScaredResourcePath)) {
+    set_image(smiley_happy_);
+  }
+
+  // Connects the button to Minefield mouse events, allowing it to change images
+  // based on mouse state.
+  void ConnectToMineField(MineField& mine_field) {
+    mine_field.signal_button_press_event().connect([this](GdkEventButton*) {
+      if (game_ != nullptr && !game_->IsGameOver()) {
+        set_image(smiley_scared_);
+      }
+      return false;
+    });
+
+    mine_field.signal_button_release_event().connect([this](GdkEventButton*) {
+      UpdateImage();
+      return false;
+    });
+  }
+
+  // Resets the button for a new game.
+  //
+  // The button will subscribe to the game for event notifications.
+  void Reset(Game& game) {
+    game_ = &game;
+    game_->Subscribe(this);
+    UpdateImage();
+  }
+
+  // Updates the button image based on event notifications.
+  void NotifyEvent(const Event& event) final {
+    switch (event.type) {
+      case Event::Type::WIN:
+      case Event::Type::LOSS:
+        UpdateImage();
+        break;
+      default:
+        // We don't care about other event types.
+        break;
+    }
+  }
+
+ private:
+  static constexpr std::size_t kPixbufSize = 30;
+  static constexpr const char* kSmileyHappyResourcePath =
+      "/com/alanwj/mines-solver/smiley-happy.svg";
+  static constexpr const char* kSmileyCryResourcePath =
+      "/com/alanwj/mines-solver/smiley-cry.svg";
+  static constexpr const char* kSmileyCoolResourcePath =
+      "/com/alanwj/mines-solver/smiley-cool.svg";
+  static constexpr const char* kSmileyScaredResourcePath =
+      "/com/alanwj/mines-solver/smiley-scared.svg";
+
+  // Creates the pixbuf for a smiley from the provided resource path.
+  static Glib::RefPtr<Gdk::Pixbuf> CreateSmiley(const char* resource_path) {
+    return compat::CreatePixbufFromResource(resource_path, kPixbufSize,
+                                            kPixbufSize);
+  }
+
+  // Updates the button image based on game state.
+  void UpdateImage() {
+    if (game_ == nullptr) {
+      set_image(smiley_happy_);
+      return;
+    }
+
+    switch (game_->GetState()) {
+      case Game::State::NEW:
+      case Game::State::PLAYING:
+        set_image(smiley_happy_);
+        break;
+      case Game::State::WIN:
+        set_image(smiley_cool_);
+        break;
+      case Game::State::LOSS:
+        set_image(smiley_cry_);
+        break;
+    }
+  }
+
+  Gtk::Image smiley_happy_;
+  Gtk::Image smiley_cry_;
+  Gtk::Image smiley_cool_;
+  Gtk::Image smiley_scared_;
+
+  Game* game_ = nullptr;
+};
+
 // The main window for the game.
 class MinesWindow : public Gtk::ApplicationWindow {
  public:
   MinesWindow(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& builder)
       : Gtk::ApplicationWindow(cobj),
         field_(GetBuilderWidget<MineField>(builder, "mine-field")),
+        reset_button_(GetBuilderWidget<ResetButton>(builder, "reset-button")),
         solver_algorithm_(solver::Algorithm::NONE) {
     add_action("new", sigc::mem_fun(this, &MinesWindow::NewGame));
     solver_action_ = add_action_radio_string(
@@ -692,6 +794,10 @@ class MinesWindow : public Gtk::ApplicationWindow {
 
     field_->signal_action().connect(
         sigc::mem_fun(this, &MinesWindow::HandleAction));
+
+    reset_button_->signal_clicked().connect(
+        sigc::mem_fun(this, &MinesWindow::NewGame));
+    reset_button_->ConnectToMineField(*field_);
 
     NewGame();
   }
@@ -702,6 +808,7 @@ class MinesWindow : public Gtk::ApplicationWindow {
     game_ = mines::NewGame(16, 30, 99, std::time(nullptr));
     solver_ = solver::New(solver_algorithm_, *game_);
     field_->Reset(*game_);
+    reset_button_->Reset(*game_);
   }
 
   // Changes the solver algorithm and starts a new game.
@@ -735,6 +842,9 @@ class MinesWindow : public Gtk::ApplicationWindow {
 
   // The mine field.
   MineField* field_;
+
+  // The reset button.
+  ResetButton* reset_button_;
 
   // Menu action for selection the solver algorithm.
   Glib::RefPtr<Gio::SimpleAction> solver_action_;
