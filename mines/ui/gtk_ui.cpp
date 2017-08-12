@@ -332,13 +332,15 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
       : Gtk::DrawingArea(cobj) {}
 
   // Resets the internal state for a new game.
-  void Reset(std::size_t rows, std::size_t cols) {
-    rows_ = rows;
-    cols_ = cols;
+  void Reset(Game& game) {
+    game.Subscribe(this);
+
+    rows_ = game.GetRows();
+    cols_ = game.GetCols();
     grid_.Reset(rows_, cols_);
 
-    const int min_width = kCellSize * cols + 2 * kFrameSize;
-    const int min_height = kCellSize * rows + 2 * kFrameSize;
+    const int min_width = kCellSize * cols_ + 2 * kFrameSize;
+    const int min_height = kCellSize * rows_ + 2 * kFrameSize;
 
     set_size_request(min_width, min_height);
 
@@ -699,9 +701,7 @@ class MinesWindow : public Gtk::ApplicationWindow {
   void NewGame() {
     game_ = mines::NewGame(16, 30, 99, std::time(nullptr));
     solver_ = solver::New(solver_algorithm_, *game_);
-
-    game_->Subscribe(field_);
-    field_->Reset(game_->GetRows(), game_->GetCols());
+    field_->Reset(*game_);
   }
 
   // Changes the solver algorithm and starts a new game.
