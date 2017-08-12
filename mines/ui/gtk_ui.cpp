@@ -12,6 +12,8 @@
 #include <gdkmm/general.h>
 #include <gdkmm/pixbuf.h>
 #include <glibmm/main.h>
+#include <glibmm/refptr.h>
+#include <glibmm/ustring.h>
 #include <gtkmm/applicationwindow.h>
 #include <gtkmm/box.h>
 #include <gtkmm/builder.h>
@@ -29,6 +31,17 @@ namespace mines {
 namespace ui {
 
 namespace {
+
+// Gets the named widget from the builder.
+//
+// This is a convenience function to make calling get_widget_derived easier.
+template <typename T>
+T* GetBuilderWidget(const Glib::RefPtr<Gtk::Builder>& builder,
+                    const Glib::ustring& name) {
+  T* widget = nullptr;
+  builder->get_widget_derived(name, widget);
+  return widget;
+}
 
 // Encapsulates a simple RGB color.
 struct Color {
@@ -315,10 +328,8 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
   static constexpr const char* kFlagResourcePath =
       "/com/alanwj/mines-solver/flag.svg";
 
-  MineField() {
-    // DrawingArea subclasses have to explicitly ask for mouse events.
-    add_events(Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK);
-  }
+  MineField(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>&)
+      : Gtk::DrawingArea(cobj) {}
 
   // Resets the internal state for a new game.
   void Reset(std::size_t rows, std::size_t cols) {
@@ -665,52 +676,20 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
 
 constexpr Color MineField::kFrameColor;
 
-// The primary controller for a game and all of its UI elements.
-class MinesUiContainer : public Gtk::Box {
- public:
-  static constexpr std::size_t kBorderWidth = 8;
-
-  MinesUiContainer() {
-    set_border_width(kBorderWidth);
-
-    field_.show();
-    pack_end(field_, true, true);
-  }
-
-  // Resets the internal state for a new game.
-  void Reset(Game& game) {
-    game.Subscribe(&field_);
-    field_.Reset(game.GetRows(), game.GetCols());
-  }
-
-  // The signal sent when an Action is peformed on the mine field.
-  //
-  // The action type will be one of: UNCOVER, CHORD, or FLAG.
-  sigc::signal<void, Action>& signal_action() { return field_.signal_action(); }
-
- private:
-  MineField field_;
-};
-
 // The main window for the game.
 class MinesWindow : public Gtk::ApplicationWindow {
  public:
-  static constexpr const char* kTitle = "Mines";
-
-  MinesWindow() : solver_algorithm_(solver::Algorithm::NONE) {
-    set_title(kTitle);
-    set_position(Gtk::WIN_POS_CENTER);
-
+  MinesWindow(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& builder)
+      : Gtk::ApplicationWindow(cobj),
+        field_(GetBuilderWidget<MineField>(builder, "mine-field")),
+        solver_algorithm_(solver::Algorithm::NONE) {
     add_action("new", sigc::mem_fun(this, &MinesWindow::NewGame));
     solver_action_ = add_action_radio_string(
         "solver", sigc::mem_fun(this, &MinesWindow::NewSolverAlgorithm),
         "none");
 
-    ui_container_.signal_action().connect(
+    field_->signal_action().connect(
         sigc::mem_fun(this, &MinesWindow::HandleAction));
-
-    add(ui_container_);
-    ui_container_.show();
 
     NewGame();
   }
@@ -723,7 +702,8 @@ class MinesWindow : public Gtk::ApplicationWindow {
     solver_ = solver::New(solver_algorithm_, *game_);
     game_->Subscribe(solver_.get());
 
-    ui_container_.Reset(*game_);
+    game_->Subscribe(field_);
+    field_->Reset(game_->GetRows(), game_->GetCols());
   }
 
   // Changes the solver algorithm and starts a new game.
@@ -755,8 +735,8 @@ class MinesWindow : public Gtk::ApplicationWindow {
     } while (!actions.empty());
   }
 
-  // The main container for all widgets.
-  MinesUiContainer ui_container_;
+  // The mine field.
+  MineField* field_;
 
   // Menu action for selection the solver algorithm.
   Glib::RefPtr<Gio::SimpleAction> solver_action_;
@@ -775,8 +755,8 @@ class MinesWindow : public Gtk::ApplicationWindow {
 class MinesApplication : public Gtk::Application {
  public:
   static constexpr const char* kApplicationId = "com.alanwj.mines-solver";
-  static constexpr const char* kMenuResourcePath =
-      "/com/alanwj/mines-solver/menu.ui";
+  static constexpr const char* kUiResourcePath =
+      "/com/alanwj/mines-solver/mines-solver.ui";
 
   MinesApplication() : Gtk::Application(kApplicationId) {}
 
@@ -785,7 +765,7 @@ class MinesApplication : public Gtk::Application {
     Gtk::Application::on_startup();
     ui_register_resource();
 
-    builder_ = Gtk::Builder::create_from_resource(kMenuResourcePath);
+    builder_ = Gtk::Builder::create_from_resource(kUiResourcePath);
     auto menu = Glib::RefPtr<Gio::MenuModel>::cast_dynamic(
         builder_->get_object("menu"));
 
@@ -795,17 +775,18 @@ class MinesApplication : public Gtk::Application {
   void on_activate() final {
     Gtk::Application::on_activate();
 
-    MinesWindow* window = new MinesWindow();
-    add_window(*window);
-    window->signal_hide().connect(sigc::bind<MinesWindow*>(
-        sigc::mem_fun(this, &MinesApplication::OnHideWindow), window));
-    window->present();
+    window_.reset(GetBuilderWidget<MinesWindow>(builder_, "app-window"));
+    add_window(*window_);
+    window_->signal_hide().connect(
+        sigc::mem_fun(this, &MinesApplication::OnHideWindow));
+    window_->present();
   }
 
  private:
-  void OnHideWindow(MinesWindow* window) { delete window; }
+  void OnHideWindow() { window_.reset(); }
 
   Glib::RefPtr<Gtk::Builder> builder_;
+  std::unique_ptr<MinesWindow> window_;
 };
 
 }  // namespace

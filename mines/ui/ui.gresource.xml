@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
   <gresource prefix="/com/alanwj/mines-solver">
-    <file>menu.ui</file>
+    <file>mines-solver.ui</file>
     <file>mine.svg</file>
     <file>flag.svg</file>
   </gresource>

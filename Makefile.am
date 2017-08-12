@@ -33,7 +33,7 @@ mines_solver_LDADD = @GTKMM_LIBS@
 
 
 RESOURCE_FILES = \
-  mines/ui/menu.ui \
+  mines/ui/mines-solver.ui \
   mines/ui/mine.svg \
   mines/ui/flag.svg
 
