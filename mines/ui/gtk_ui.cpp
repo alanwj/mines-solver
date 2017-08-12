@@ -435,6 +435,12 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
 
   // Handles mouse button releases.
   bool on_button_release_event(GdkEventButton* event) final {
+    // If a new game is created while mouse buttons are held the count can
+    // become inconsistent.
+    if (mouse_state_.count == 0) {
+      return false;
+    }
+
     if (event->button < 1 || event->button > MouseState::kMaxButton) {
       return false;
     }
