@@ -1,9 +1,8 @@
 #ifndef MINES_GAME_GRID_H_
 #define MINES_GAME_GRID_H_
 
-#include <algorithm>
 #include <cstddef>
-#include <vector>
+#include <memory>
 
 namespace mines {
 
@@ -11,9 +10,9 @@ namespace mines {
 template <typename Cell>
 class Grid {
  public:
-  Grid(std::size_t rows, std::size_t cols)
-      : cells_(std::max(rows, std::size_t{1}),
-               std::vector<Cell>(std::max(cols, std::size_t{1}))) {}
+  Grid() : Grid(0, 0) {}
+
+  Grid(std::size_t rows, std::size_t cols) { Reset(rows, cols); }
 
   ~Grid() = default;
 
@@ -25,15 +24,27 @@ class Grid {
   Grid(Grid&&) = default;
   Grid& operator=(Grid&&) = default;
 
+  // Resets the grid with new set of cells at the specified dimensions.
+  void Reset(std::size_t rows, std::size_t cols) {
+    rows_ = rows;
+    cols_ = cols;
+    if (rows > 0 && cols > 0) {
+      cells_.reset(new std::unique_ptr<Cell[]>[rows]);
+      for (std::size_t row = 0; row < rows; ++row) {
+        cells_[row].reset(new Cell[cols]);
+      }
+    }
+  }
+
   // Returns the number of rows.
-  std::size_t GetRows() const { return cells_.size(); }
+  std::size_t GetRows() const { return rows_; }
 
   // Returns the number of columns.
-  std::size_t GetCols() const { return cells_[0].size(); }
+  std::size_t GetCols() const { return cols_; }
 
   // Returns true if the given row and column are valid.
   bool IsValid(std::size_t row, std::size_t col) const {
-    return row < GetRows() && col < GetCols();
+    return row < rows_ && col < cols_;
   }
 
   // Returns the Cell at the specified row and column.
@@ -52,10 +63,8 @@ class Grid {
   //   fn(row, col, cell);
   template <class Fn>
   void ForEach(Fn fn) {
-    const std::size_t rows = GetRows();
-    const std::size_t cols = GetCols();
-    for (std::size_t row = 0; row < rows; ++row) {
-      for (std::size_t col = 0; col < cols; ++col) {
+    for (std::size_t row = 0; row < rows_; ++row) {
+      for (std::size_t col = 0; col < cols_; ++col) {
         fn(row, col, cells_[row][col]);
       }
     }
@@ -83,7 +92,9 @@ class Grid {
   }
 
  private:
-  std::vector<std::vector<Cell>> cells_;
+  std::size_t rows_;
+  std::size_t cols_;
+  std::unique_ptr<std::unique_ptr<Cell[]>[]> cells_;
 };
 
 }  // namespace mines
