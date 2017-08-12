@@ -46,7 +46,8 @@ struct Event {
     // Identifies a mine location. Only generated when a game is lost.
     IDENTIFY_MINE,
 
-    // Identifies a location that was flagged but is not a mine. Only generated when a game is lost.
+    // Identifies a location that was flagged but is not a mine. Only generated
+    // when a game is lost.
     IDENTIFY_BAD_FLAG,
   };
 
@@ -84,7 +85,8 @@ enum class CellState {
   // The cell is the mine that caused a loss.
   LOSING_MINE,
 
-  // The cell is flagged but does not contain a mine (revealed when game is lost).
+  // The cell is flagged but does not contain a mine (revealed when game is
+  // lost).
   BAD_FLAG,
 };
 
