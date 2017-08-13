@@ -698,17 +698,10 @@ class ResetButton : public Gtk::Button, public EventSubscriber {
   // Connects the button to Minefield mouse events, allowing it to change images
   // based on mouse state.
   void ConnectToMineField(MineField& mine_field) {
-    mine_field.signal_button_press_event().connect([this](GdkEventButton*) {
-      if (game_ != nullptr && !game_->IsGameOver()) {
-        set_image(smiley_scared_);
-      }
-      return false;
-    });
-
-    mine_field.signal_button_release_event().connect([this](GdkEventButton*) {
-      UpdateImage();
-      return false;
-    });
+    mine_field.signal_button_press_event().connect(
+        sigc::mem_fun(this, &ResetButton::OnMineFieldButtonDown));
+    mine_field.signal_button_release_event().connect(
+        sigc::mem_fun(this, &ResetButton::OnMineFieldButtonRelease));
   }
 
   // Resets the button for a new game.
@@ -769,6 +762,20 @@ class ResetButton : public Gtk::Button, public EventSubscriber {
         set_image(smiley_cry_);
         break;
     }
+  }
+
+  // Updates the image when a mouse button is pressed on the mine field.
+  bool OnMineFieldButtonDown(GdkEventButton*) {
+    if (game_ != nullptr && !game_->IsGameOver()) {
+      set_image(smiley_scared_);
+    }
+    return false;
+  }
+
+  // Updates the image when a mouse button is released on the mine field.
+  bool OnMineFieldButtonRelease(GdkEventButton*) {
+    UpdateImage();
+    return false;
   }
 
   Gtk::Image smiley_happy_;
