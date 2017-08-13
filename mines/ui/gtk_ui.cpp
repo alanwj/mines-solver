@@ -20,6 +20,7 @@
 #include <gtkmm/button.h>
 #include <gtkmm/drawingarea.h>
 #include <gtkmm/image.h>
+#include <gtkmm/label.h>
 #include <sigc++/sigc++.h>
 
 #include "mines/compat/gdk_pixbuf.h"
@@ -786,6 +787,159 @@ class ResetButton : public Gtk::Button, public EventSubscriber {
   Game* game_ = nullptr;
 };
 
+// A counter widget.
+class Counter : public Gtk::DrawingArea {
+ public:
+  Counter(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>&)
+      : Gtk::DrawingArea(cobj) {
+    set_size_request(kWidth, kHeight);
+    LoadPixbufs();
+    SetValue(0);
+  }
+
+  // Sets the value to display in the widget.
+  void SetValue(std::size_t value) {
+    value_ = value;
+    queue_draw();
+  }
+
+ protected:
+  bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr) final {
+    std::size_t value = value_;
+
+    for (std::size_t i = kNumDigits; i--;) {
+      std::size_t d = value % 10;
+      value /= 10;
+
+      Glib::RefPtr<Gdk::Pixbuf> pixbuf;
+      if (d == 0 && value == 0 && i != kNumDigits - 1) {
+        pixbuf = digit_off_;
+      } else {
+        pixbuf = digit_[d];
+      }
+      Gdk::Cairo::set_source_pixbuf(cr, pixbuf, kDigitWidth * i, 0);
+      cr->paint();
+    }
+
+    return false;
+  }
+
+ private:
+  static constexpr std::size_t kDigitWidth = 23;
+  static constexpr std::size_t kDigitHeight = 40;
+  static constexpr std::size_t kNumDigits = 3;
+  static constexpr std::size_t kWidth = kNumDigits * kDigitWidth;
+  static constexpr std::size_t kHeight = kDigitHeight;
+
+  static constexpr const char* kDigitResourcePathFormat =
+      "/com/alanwj/mines-solver/digit-%1.bmp";
+  static constexpr const char* kDigitOffResourcePath =
+      "/com/alanwj/mines-solver/digit-off.bmp";
+
+  // Loads all of the necessary pixbufs from the global resources.
+  void LoadPixbufs() {
+    for (std::size_t i = 0; i < 10; ++i) {
+      digit_[i] = compat::CreatePixbufFromResource(
+          Glib::ustring::compose(kDigitResourcePathFormat, i).c_str(),
+          kDigitWidth, kDigitHeight);
+      digit_off_ = compat::CreatePixbufFromResource(kDigitOffResourcePath,
+                                                    kDigitWidth, kDigitHeight);
+    }
+  }
+
+  Glib::RefPtr<Gdk::Pixbuf> digit_[10];
+  Glib::RefPtr<Gdk::Pixbuf> digit_off_;
+
+  std::size_t value_ = 0;
+};
+
+// A counter widget to display the remaining number of mines.
+class RemainingMinesCounter : public Counter, public EventSubscriber {
+ public:
+  RemainingMinesCounter(BaseObjectType* cobj,
+                        const Glib::RefPtr<Gtk::Builder>& builder)
+      : Counter(cobj, builder) {}
+
+  // Resets the counter for a new game.
+  //
+  // The counter will subscribe to the game for event notifications.
+  void Reset(Game& game) {
+    flags_ = 0;
+    game_ = &game;
+    game_->Subscribe(this);
+    SetValue(game_->GetMines());
+  }
+
+  // Updates the counter based on the event.
+  void NotifyEvent(const Event& event) final {
+    switch (event.type) {
+      case Event::Type::FLAG:
+        ++flags_;
+        UpdateCount();
+        break;
+      case Event::Type::UNFLAG:
+        if (flags_ > 0) {
+          --flags_;
+        }
+        UpdateCount();
+        break;
+      default:
+        break;
+    }
+  }
+
+ private:
+  // Updates the currently displayed count.
+  void UpdateCount() {
+    const std::size_t mines = game_->GetMines();
+    SetValue(flags_ < mines ? mines - flags_ : 0);
+  }
+
+  std::size_t flags_ = 0;
+  Game* game_ = nullptr;
+};
+
+// A counter widget to display the elapsed time.
+class ElapsedTimeCounter : public Counter, public EventSubscriber {
+ public:
+  ElapsedTimeCounter(BaseObjectType* cobj,
+                     const Glib::RefPtr<Gtk::Builder>& builder)
+      : Counter(cobj, builder) {}
+
+  // Resets the counter for a new game.
+  //
+  // The counter will subscribe to the game for event notifications.
+  void Reset(Game& game) {
+    timer_.disconnect();
+
+    game_ = &game;
+    game_->Subscribe(this);
+    SetValue(0);
+  }
+
+  // If necessary, connects to the timeout signal to regularly update the
+  // elapsed time.
+  void NotifyEvent(const Event&) final {
+    if (!timer_) {
+      timer_ = Glib::signal_timeout().connect(
+          sigc::mem_fun(this, &ElapsedTimeCounter::UpdateElapsedTime),
+          kUpdatePeriodMs);
+    }
+  }
+
+ private:
+  static constexpr std::size_t kUpdatePeriodMs = 100;
+
+  // Updates the displayed elapsed time.
+  bool UpdateElapsedTime() {
+    SetValue(game_->GetElapsedSeconds());
+    return !game_->IsGameOver();
+  }
+
+  sigc::connection timer_;
+  Game* game_ = nullptr;
+};
+
 // The main window for the game.
 class MinesWindow : public Gtk::ApplicationWindow {
  public:
@@ -793,6 +947,10 @@ class MinesWindow : public Gtk::ApplicationWindow {
       : Gtk::ApplicationWindow(cobj),
         field_(GetBuilderWidget<MineField>(builder, "mine-field")),
         reset_button_(GetBuilderWidget<ResetButton>(builder, "reset-button")),
+        remaining_mines_counter_(GetBuilderWidget<RemainingMinesCounter>(
+            builder, "remaining-mines-counter")),
+        elapsed_time_counter_(GetBuilderWidget<ElapsedTimeCounter>(
+            builder, "elapsed-time-counter")),
         solver_algorithm_(solver::Algorithm::NONE) {
     add_action("new", sigc::mem_fun(this, &MinesWindow::NewGame));
     solver_action_ = add_action_radio_string(
@@ -816,6 +974,8 @@ class MinesWindow : public Gtk::ApplicationWindow {
     solver_ = solver::New(solver_algorithm_, *game_);
     field_->Reset(*game_);
     reset_button_->Reset(*game_);
+    remaining_mines_counter_->Reset(*game_);
+    elapsed_time_counter_->Reset(*game_);
   }
 
   // Changes the solver algorithm and starts a new game.
@@ -852,6 +1012,12 @@ class MinesWindow : public Gtk::ApplicationWindow {
 
   // The reset button.
   ResetButton* reset_button_;
+
+  // The remaining mines counter.
+  RemainingMinesCounter* remaining_mines_counter_;
+
+  // The elapsed time counter.
+  ElapsedTimeCounter* elapsed_time_counter_;
 
   // Menu action for selection the solver algorithm.
   Glib::RefPtr<Gio::SimpleAction> solver_action_;

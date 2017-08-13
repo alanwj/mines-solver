@@ -8,5 +8,16 @@
     <file>smiley-cry.svg</file>
     <file>smiley-happy.svg</file>
     <file>smiley-scared.svg</file>
+    <file>digit-0.bmp</file>
+    <file>digit-1.bmp</file>
+    <file>digit-2.bmp</file>
+    <file>digit-3.bmp</file>
+    <file>digit-4.bmp</file>
+    <file>digit-5.bmp</file>
+    <file>digit-6.bmp</file>
+    <file>digit-7.bmp</file>
+    <file>digit-8.bmp</file>
+    <file>digit-9.bmp</file>
+    <file>digit-off.bmp</file>
   </gresource>
 </gresources>

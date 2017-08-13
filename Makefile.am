@@ -39,7 +39,18 @@ RESOURCE_FILES = \
   mines/ui/smiley-cool.svg \
   mines/ui/smiley-cry.svg \
   mines/ui/smiley-happy.svg \
-  mines/ui/smiley-scared.svg
+  mines/ui/smiley-scared.svg \
+  mines/ui/digit-0.bmp \
+  mines/ui/digit-1.bmp \
+  mines/ui/digit-2.bmp \
+  mines/ui/digit-3.bmp \
+  mines/ui/digit-4.bmp \
+  mines/ui/digit-5.bmp \
+  mines/ui/digit-6.bmp \
+  mines/ui/digit-7.bmp \
+  mines/ui/digit-8.bmp \
+  mines/ui/digit-9.bmp \
+  mines/ui/digit-off.bmp
 
 BUILT_SOURCES = \
   mines/ui/resources.cpp \

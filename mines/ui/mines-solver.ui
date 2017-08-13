@@ -13,6 +13,16 @@
           <object class="GtkBox" id="ctrl-box">
             <property name="visible">true</property>
             <child>
+              <object class="GtkDrawingArea" id="remaining-mines-counter">
+                <property name="visible">true</property>
+                <property name="can-focus">false</property>
+              </object>
+              <packing>
+                <property name="expand">false</property>
+                <property name="fill">false</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkButton" id="reset-button">
                 <property name="visible">true</property>
                 <property name="can-focus">false</property>
@@ -20,6 +30,17 @@
               <packing>
                 <property name="expand">true</property>
                 <property name="fill">false</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkDrawingArea" id="elapsed-time-counter">
+                <property name="visible">true</property>
+                <property name="can-focus">false</property>
+              </object>
+              <packing>
+                <property name="expand">false</property>
+                <property name="fill">false</property>
+                <property name="pack-type">GTK_PACK_END</property>
               </packing>
             </child>
           </object>
