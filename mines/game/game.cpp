@@ -1,6 +1,7 @@
 #include "mines/game/game.h"
 
 #include <algorithm>
+#include <chrono>
 #include <functional>
 #include <queue>
 #include <random>
@@ -123,6 +124,8 @@ class Cell {
 // The game implementation.
 class GameImpl : public Game {
  public:
+  using Clock = std::chrono::steady_clock;
+
   GameImpl(std::size_t rows, std::size_t cols, std::size_t mines, unsigned seed)
       : mines_(mines),
         state_(State::NEW),
@@ -154,6 +157,10 @@ class GameImpl : public Game {
   void Execute(const Action& action) final {
     if (IsGameOver() || !grid_.IsValid(action.row, action.col)) {
       return;
+    }
+
+    if (state_ == State::NEW) {
+      start_time_ = Clock::now();
     }
 
     std::vector<Event> events;
@@ -193,6 +200,19 @@ class GameImpl : public Game {
   std::size_t GetMines() const final { return mines_; }
 
   State GetState() const final { return state_; }
+
+  std::size_t GetElapsedSeconds() const final {
+    using std::chrono::duration_cast;
+    using std::chrono::seconds;
+
+    if (state_ == State::NEW) {
+      return 0;
+    } else if (IsGameOver()) {
+      return duration_cast<seconds>(end_time_ - start_time_).count();
+    } else {
+      return duration_cast<seconds>(Clock::now() - start_time_).count();
+    }
+  }
 
  private:
   // Attempts to uncover the specified cell.
@@ -304,6 +324,7 @@ class GameImpl : public Game {
       if (remaining_covered_ == 0) {
         events.push_back(WinEvent(row, col));
         state_ = State::WIN;
+        end_time_ = Clock::now();
         return;
       }
 
@@ -330,6 +351,7 @@ class GameImpl : public Game {
 
     events.push_back(LossEvent(row, col));
     state_ = State::LOSS;
+    end_time_ = Clock::now();
   }
 
   const std::size_t mines_;
@@ -338,6 +360,9 @@ class GameImpl : public Game {
   Grid<Cell> grid_;
   Cell* backup_cell_;
   std::vector<EventSubscriber*> subscribers_;
+
+  Clock::time_point start_time_;
+  Clock::time_point end_time_;
 };
 
 }  // namespace

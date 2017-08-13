@@ -149,6 +149,12 @@ class Game {
   // Returns the current game state.
   virtual State GetState() const = 0;
 
+  // Returns the elapsed time that the game has been played.
+  //
+  // If no action has yet been executed this value will be zero.
+  // If the game is over this value will no longer continue to change.
+  virtual std::size_t GetElapsedSeconds() const = 0;
+
   // Returns true if the game is over.
   bool IsGameOver() const {
     const State state = GetState();
