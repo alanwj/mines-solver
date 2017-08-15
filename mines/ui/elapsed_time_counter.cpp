@@ -8,6 +8,7 @@
 namespace mines {
 namespace ui {
 
+// The period, in milliseconds, between updates to the counter.
 constexpr std::size_t kUpdatePeriodMs = 100;
 
 ElapsedTimeCounter::ElapsedTimeCounter(
