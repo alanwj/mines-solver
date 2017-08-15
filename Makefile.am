@@ -25,6 +25,8 @@ mines_solver_SOURCES = \
   mines/solver/solver.h \
   mines/ui/counter.cpp \
   mines/ui/counter.h \
+  mines/ui/elapsed_time_counter.cpp \
+  mines/ui/elapsed_time_counter.h \
   mines/ui/gtk_ui.cpp \
   mines/ui/gtk_ui.h \
   mines/ui/remaining_mines_counter.cpp \

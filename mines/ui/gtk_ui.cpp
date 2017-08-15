@@ -28,7 +28,7 @@
 #include "mines/game/game.h"
 #include "mines/game/grid.h"
 #include "mines/solver/solver.h"
-#include "mines/ui/counter.h"
+#include "mines/ui/elapsed_time_counter.h"
 #include "mines/ui/remaining_mines_counter.h"
 #include "mines/ui/resources.h"
 
@@ -857,47 +857,6 @@ class ResetButton : public Gtk::Button, public EventSubscriber {
   Gtk::Image smiley_cool_;
   Gtk::Image smiley_scared_;
 
-  Game* game_ = nullptr;
-};
-
-// A counter widget to display the elapsed time.
-class ElapsedTimeCounter : public Counter, public EventSubscriber {
- public:
-  ElapsedTimeCounter(BaseObjectType* cobj,
-                     const Glib::RefPtr<Gtk::Builder>& builder)
-      : Counter(cobj, builder) {}
-
-  // Resets the counter for a new game.
-  //
-  // The counter will subscribe to the game for event notifications.
-  void Reset(Game& game) {
-    timer_.disconnect();
-
-    game_ = &game;
-    game_->Subscribe(this);
-    SetValue(0);
-  }
-
-  // If necessary, connects to the timeout signal to regularly update the
-  // elapsed time.
-  void NotifyEvent(const Event&) final {
-    if (!timer_) {
-      timer_ = Glib::signal_timeout().connect(
-          sigc::mem_fun(this, &ElapsedTimeCounter::UpdateElapsedTime),
-          kUpdatePeriodMs);
-    }
-  }
-
- private:
-  static constexpr std::size_t kUpdatePeriodMs = 100;
-
-  // Updates the displayed elapsed time.
-  bool UpdateElapsedTime() {
-    SetValue(game_->GetElapsedSeconds());
-    return !game_->IsGameOver();
-  }
-
-  sigc::connection timer_;
   Game* game_ = nullptr;
 };
 
