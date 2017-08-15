@@ -34,12 +34,16 @@ constexpr const char* kDigitOffResourcePath =
 Counter::Counter(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>&)
     : Gtk::DrawingArea(cobj) {
   set_size_request(kWidth, kHeight);
-  LoadPixbufs();
 }
 
 void Counter::SetValue(std::size_t value) {
   value_ = value;
   queue_draw();
+}
+
+void Counter::on_realize() {
+  Gtk::DrawingArea::on_realize();
+  LoadPixbufs();
 }
 
 bool Counter::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {

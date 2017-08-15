@@ -25,6 +25,9 @@ class Counter : public Gtk::DrawingArea {
   void SetValue(std::size_t value);
 
  protected:
+  // Handler for the realize signal.
+  void on_realize() final;
+
   // Handler for the draw signal.
   bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr) final;
 
