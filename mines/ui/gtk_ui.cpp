@@ -399,19 +399,37 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
 
   // Draws the widget.
   bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr) final {
+    // We start by computing the top left (min) and bottom right (max) cell that
+    // will need to be drawn.
+    double clip_x;
+    double clip_y;
+    double clip_width;
+    double clip_height;
+    cr->get_clip_extents(clip_x, clip_y, clip_width, clip_height);
+
+    CellRef min_cell = GetCellRefFromPoint(clip_x, clip_y);
+    if (min_cell.cell == nullptr) {
+      min_cell = CellRef{nullptr, 0, 0};
+    }
+
+    CellRef max_cell = GetCellRefFromPoint(clip_width - 1.0, clip_height - 1.0);
+    if (max_cell.cell == nullptr) {
+      max_cell = CellRef{nullptr, rows_ - 1, cols_ - 1};
+    }
+
     // Defaults for drawing lines.
     cr->set_line_width(1);
     cr->set_line_cap(Cairo::LINE_CAP_SQUARE);
 
+    cr->save();
     cr->translate(dim_.x, dim_.y);
-
     DrawFrame(cr);
+    cr->restore();
 
-    for (std::size_t row = 0; row < rows_; ++row) {
-      for (std::size_t col = 0; col < cols_; ++col) {
+    for (std::size_t row = min_cell.row; row <= max_cell.row; ++row) {
+      for (std::size_t col = min_cell.col; col <= max_cell.col; ++col) {
         cr->save();
-        cr->translate(col * dim_.cell_size + kFrameSize,
-                      row * dim_.cell_size + kFrameSize);
+        cr->translate(GetCellX(col), GetCellY(row));
 
         CellDrawFlyweight flyweight(cr, dim_, pixbufs_, grid_(row, col), row,
                                     col);
@@ -448,6 +466,8 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
       return false;
     }
 
+    CellRegion region(clicked_cell_.row, clicked_cell_.col);
+
     if (mouse_state_.btn[0] || mouse_state_.btn[2]) {
       clicked_cell_.cell->pressed = true;
     }
@@ -455,13 +475,14 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
     if (mouse_state_.btn[1] || (mouse_state_.btn[0] && mouse_state_.btn[2])) {
       clicked_cell_.cell->pressed = false;
       grid_.ForEachAdjacent(clicked_cell_.row, clicked_cell_.col,
-                            [this](std::size_t row, std::size_t col) {
+                            [this, &region](std::size_t row, std::size_t col) {
+                              region.Include(row, col);
                               grid_(row, col).pressed = true;
                               return false;
                             });
     }
 
-    queue_draw();
+    QueueDrawCellRegion(region);
 
     return false;
   }
@@ -500,13 +521,15 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
 
     // Reset the UI to visually unpress buttons.
     if (clicked_cell_.cell != nullptr) {
+      CellRegion region(clicked_cell_.row, clicked_cell_.col);
       clicked_cell_.cell->pressed = false;
       grid_.ForEachAdjacent(clicked_cell_.row, clicked_cell_.col,
-                            [this](std::size_t row, std::size_t col) {
+                            [this, &region](std::size_t row, std::size_t col) {
+                              region.Include(row, col);
                               grid_(row, col).pressed = false;
                               return false;
                             });
-      queue_draw();
+      QueueDrawCellRegion(region);
     }
 
     // Reset the mouse state.
@@ -523,6 +546,31 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
     std::size_t col;
 
     static CellRef None() { return {nullptr, 0, 0}; }
+  };
+
+  // A rectangular region of one or more cells, represented as the location of
+  // the top left and bottom right cells.
+  struct CellRegion {
+    // Constructs a cell region containing the specified cell.
+    CellRegion(std::size_t row, std::size_t col) {
+      min_row = row;
+      max_row = row;
+      min_col = col;
+      max_col = col;
+    }
+
+    // Ensures that the specified cell is included in the region.
+    void Include(std::size_t row, std::size_t col) {
+      min_row = std::min(row, min_row);
+      max_row = std::max(row, max_row);
+      min_col = std::min(col, min_col);
+      max_col = std::max(col, max_col);
+    }
+
+    std::size_t min_row;
+    std::size_t max_row;
+    std::size_t min_col;
+    std::size_t max_col;
   };
 
   // The state of the mouse.
@@ -554,6 +602,29 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
     const std::size_t row = (uy - min_y) / dim_.cell_size;
     const std::size_t col = (ux - min_x) / dim_.cell_size;
     return CellRef{&grid_(row, col), row, col};
+  }
+
+  // Computes the x coordinate, in pixels, of cells in the specified column.
+  std::size_t GetCellX(std::size_t col) const {
+    return dim_.x + kFrameSize + col * dim_.cell_size;
+  }
+
+  // Computes the y coordinate, in pixels, of cells in the specified row.
+  std::size_t GetCellY(std::size_t row) const {
+    return dim_.y + kFrameSize + row * dim_.cell_size;
+  }
+
+  // Requests a redraw clipped to the specified cell.
+  void QueueDrawCell(std::size_t row, std::size_t col) {
+    queue_draw_area(GetCellX(col), GetCellY(row), dim_.cell_size,
+                    dim_.cell_size);
+  }
+
+  // Requests a redraw clipped to the specified cell region.
+  void QueueDrawCellRegion(const CellRegion& region) {
+    queue_draw_area(GetCellX(region.min_col), GetCellY(region.min_row),
+                    (region.max_col - region.min_col + 1) * dim_.cell_size,
+                    (region.max_row - region.min_row + 1) * dim_.cell_size);
   }
 
   // Recomputes the drawing dimensions.
@@ -637,7 +708,7 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
         cell.state = CellState::BAD_FLAG;
         break;
     }
-    queue_draw();
+    QueueDrawCell(event.row, event.col);
   }
 
   // Returns true if the specified row and column are in or adjacent to the
