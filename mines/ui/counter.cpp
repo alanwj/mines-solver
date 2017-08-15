@@ -35,7 +35,6 @@ Counter::Counter(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>&)
     : Gtk::DrawingArea(cobj) {
   set_size_request(kWidth, kHeight);
   LoadPixbufs();
-  SetValue(0);
 }
 
 void Counter::SetValue(std::size_t value) {
