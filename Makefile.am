@@ -23,6 +23,8 @@ mines_solver_SOURCES = \
   mines/solver/nop.h \
   mines/solver/solver.cpp \
   mines/solver/solver.h \
+  mines/ui/counter.cpp \
+  mines/ui/counter.h \
   mines/ui/gtk_ui.cpp \
   mines/ui/gtk_ui.h \
   mines/ui/resources.cpp \

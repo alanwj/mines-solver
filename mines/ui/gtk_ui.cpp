@@ -28,6 +28,7 @@
 #include "mines/game/game.h"
 #include "mines/game/grid.h"
 #include "mines/solver/solver.h"
+#include "mines/ui/counter.h"
 #include "mines/ui/resources.h"
 
 namespace mines {
@@ -856,72 +857,6 @@ class ResetButton : public Gtk::Button, public EventSubscriber {
   Gtk::Image smiley_scared_;
 
   Game* game_ = nullptr;
-};
-
-// A counter widget.
-class Counter : public Gtk::DrawingArea {
- public:
-  Counter(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>&)
-      : Gtk::DrawingArea(cobj) {
-    set_size_request(kWidth, kHeight);
-    LoadPixbufs();
-    SetValue(0);
-  }
-
-  // Sets the value to display in the widget.
-  void SetValue(std::size_t value) {
-    value_ = value;
-    queue_draw();
-  }
-
- protected:
-  bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr) final {
-    std::size_t value = value_;
-
-    for (std::size_t i = kNumDigits; i--;) {
-      std::size_t d = value % 10;
-      value /= 10;
-
-      Glib::RefPtr<Gdk::Pixbuf> pixbuf;
-      if (d == 0 && value == 0 && i != kNumDigits - 1) {
-        pixbuf = digit_off_;
-      } else {
-        pixbuf = digit_[d];
-      }
-      Gdk::Cairo::set_source_pixbuf(cr, pixbuf, kDigitWidth * i, 0);
-      cr->paint();
-    }
-
-    return false;
-  }
-
- private:
-  static constexpr std::size_t kDigitWidth = 23;
-  static constexpr std::size_t kDigitHeight = 40;
-  static constexpr std::size_t kNumDigits = 3;
-  static constexpr std::size_t kWidth = kNumDigits * kDigitWidth;
-  static constexpr std::size_t kHeight = kDigitHeight;
-
-  static constexpr const char* kDigitResourcePathFormat =
-      "/com/alanwj/mines-solver/digit-%1.bmp";
-  static constexpr const char* kDigitOffResourcePath =
-      "/com/alanwj/mines-solver/digit-off.bmp";
-
-  // Loads all of the necessary pixbufs from the global resources.
-  void LoadPixbufs() {
-    for (std::size_t i = 0; i < 10; ++i) {
-      digit_[i] = compat::CreatePixbufFromResource(
-          Glib::ustring::compose(kDigitResourcePathFormat, i).c_str(),
-          kDigitWidth, kDigitHeight);
-      digit_off_ = compat::CreatePixbufFromResource(kDigitOffResourcePath,
-                                                    kDigitWidth, kDigitHeight);
-    }
-  }
-
-  Glib::RefPtr<Gdk::Pixbuf> digit_[10];
-  Glib::RefPtr<Gdk::Pixbuf> digit_off_;
-
-  std::size_t value_ = 0;
 };
 
 // A counter widget to display the remaining number of mines.
