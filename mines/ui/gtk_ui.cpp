@@ -31,6 +31,7 @@
 #include "mines/ui/elapsed_time_counter.h"
 #include "mines/ui/mine_field.h"
 #include "mines/ui/remaining_mines_counter.h"
+#include "mines/ui/reset_button.h"
 #include "mines/ui/resources.h"
 
 namespace mines {
@@ -48,112 +49,6 @@ T* GetBuilderWidget(const Glib::RefPtr<Gtk::Builder>& builder,
   builder->get_widget_derived(name, widget);
   return widget;
 }
-
-// The reset (and status) button.
-//
-// This button is used to start a new game, and provide real-time feedback on
-// the game state via the image displayed.
-class ResetButton : public Gtk::Button, public EventSubscriber {
- public:
-  ResetButton(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>&)
-      : Gtk::Button(cobj),
-        smiley_happy_(CreateSmiley(kSmileyHappyResourcePath)),
-        smiley_cry_(CreateSmiley(kSmileyCryResourcePath)),
-        smiley_cool_(CreateSmiley(kSmileyCoolResourcePath)),
-        smiley_scared_(CreateSmiley(kSmileyScaredResourcePath)) {
-    set_image(smiley_happy_);
-  }
-
-  // Connects the button to Minefield mouse events, allowing it to change images
-  // based on mouse state.
-  void ConnectToMineField(MineField& mine_field) {
-    mine_field.signal_button_press_event().connect(
-        sigc::mem_fun(this, &ResetButton::OnMineFieldButtonDown));
-    mine_field.signal_button_release_event().connect(
-        sigc::mem_fun(this, &ResetButton::OnMineFieldButtonRelease));
-  }
-
-  // Resets the button for a new game.
-  //
-  // The button will subscribe to the game for event notifications.
-  void Reset(Game& game) {
-    game_ = &game;
-    game_->Subscribe(this);
-    UpdateImage();
-  }
-
-  // Updates the button image based on event notifications.
-  void NotifyEvent(const Event& event) final {
-    switch (event.type) {
-      case Event::Type::WIN:
-      case Event::Type::LOSS:
-        UpdateImage();
-        break;
-      default:
-        // We don't care about other event types.
-        break;
-    }
-  }
-
- private:
-  static constexpr std::size_t kPixbufSize = 30;
-  static constexpr const char* kSmileyHappyResourcePath =
-      "/com/alanwj/mines-solver/smiley-happy.svg";
-  static constexpr const char* kSmileyCryResourcePath =
-      "/com/alanwj/mines-solver/smiley-cry.svg";
-  static constexpr const char* kSmileyCoolResourcePath =
-      "/com/alanwj/mines-solver/smiley-cool.svg";
-  static constexpr const char* kSmileyScaredResourcePath =
-      "/com/alanwj/mines-solver/smiley-scared.svg";
-
-  // Creates the pixbuf for a smiley from the provided resource path.
-  static Glib::RefPtr<Gdk::Pixbuf> CreateSmiley(const char* resource_path) {
-    return compat::CreatePixbufFromResource(resource_path, kPixbufSize,
-                                            kPixbufSize);
-  }
-
-  // Updates the button image based on game state.
-  void UpdateImage() {
-    if (game_ == nullptr) {
-      set_image(smiley_happy_);
-      return;
-    }
-
-    switch (game_->GetState()) {
-      case Game::State::NEW:
-      case Game::State::PLAYING:
-        set_image(smiley_happy_);
-        break;
-      case Game::State::WIN:
-        set_image(smiley_cool_);
-        break;
-      case Game::State::LOSS:
-        set_image(smiley_cry_);
-        break;
-    }
-  }
-
-  // Updates the image when a mouse button is pressed on the mine field.
-  bool OnMineFieldButtonDown(GdkEventButton*) {
-    if (game_ != nullptr && !game_->IsGameOver()) {
-      set_image(smiley_scared_);
-    }
-    return false;
-  }
-
-  // Updates the image when a mouse button is released on the mine field.
-  bool OnMineFieldButtonRelease(GdkEventButton*) {
-    UpdateImage();
-    return false;
-  }
-
-  Gtk::Image smiley_happy_;
-  Gtk::Image smiley_cry_;
-  Gtk::Image smiley_cool_;
-  Gtk::Image smiley_scared_;
-
-  Game* game_ = nullptr;
-};
 
 // The main window for the game.
 class MinesWindow : public Gtk::ApplicationWindow {

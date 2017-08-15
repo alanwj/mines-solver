@@ -33,6 +33,8 @@ mines_solver_SOURCES = \
   mines/ui/mine_field.h \
   mines/ui/remaining_mines_counter.cpp \
   mines/ui/remaining_mines_counter.h \
+  mines/ui/reset_button.cpp \
+  mines/ui/reset_button.h \
   mines/ui/resources.cpp \
   mines/ui/resources.h
 
