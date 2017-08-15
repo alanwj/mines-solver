@@ -29,6 +29,7 @@
 #include "mines/game/grid.h"
 #include "mines/solver/solver.h"
 #include "mines/ui/counter.h"
+#include "mines/ui/remaining_mines_counter.h"
 #include "mines/ui/resources.h"
 
 namespace mines {
@@ -856,52 +857,6 @@ class ResetButton : public Gtk::Button, public EventSubscriber {
   Gtk::Image smiley_cool_;
   Gtk::Image smiley_scared_;
 
-  Game* game_ = nullptr;
-};
-
-// A counter widget to display the remaining number of mines.
-class RemainingMinesCounter : public Counter, public EventSubscriber {
- public:
-  RemainingMinesCounter(BaseObjectType* cobj,
-                        const Glib::RefPtr<Gtk::Builder>& builder)
-      : Counter(cobj, builder) {}
-
-  // Resets the counter for a new game.
-  //
-  // The counter will subscribe to the game for event notifications.
-  void Reset(Game& game) {
-    flags_ = 0;
-    game_ = &game;
-    game_->Subscribe(this);
-    SetValue(game_->GetMines());
-  }
-
-  // Updates the counter based on the event.
-  void NotifyEvent(const Event& event) final {
-    switch (event.type) {
-      case Event::Type::FLAG:
-        ++flags_;
-        UpdateCount();
-        break;
-      case Event::Type::UNFLAG:
-        if (flags_ > 0) {
-          --flags_;
-        }
-        UpdateCount();
-        break;
-      default:
-        break;
-    }
-  }
-
- private:
-  // Updates the currently displayed count.
-  void UpdateCount() {
-    const std::size_t mines = game_->GetMines();
-    SetValue(flags_ < mines ? mines - flags_ : 0);
-  }
-
-  std::size_t flags_ = 0;
   Game* game_ = nullptr;
 };
 
