@@ -46,24 +46,24 @@ mines_solver_LDADD = @GTKMM_LIBS@
 
 
 RESOURCE_FILES = \
-  mines/ui/mines-solver.ui \
-  mines/ui/flag.svg \
-  mines/ui/mine.svg \
-  mines/ui/smiley-cool.svg \
-  mines/ui/smiley-cry.svg \
-  mines/ui/smiley-happy.svg \
-  mines/ui/smiley-scared.svg \
-  mines/ui/digit-0.bmp \
-  mines/ui/digit-1.bmp \
-  mines/ui/digit-2.bmp \
-  mines/ui/digit-3.bmp \
-  mines/ui/digit-4.bmp \
-  mines/ui/digit-5.bmp \
-  mines/ui/digit-6.bmp \
-  mines/ui/digit-7.bmp \
-  mines/ui/digit-8.bmp \
-  mines/ui/digit-9.bmp \
-  mines/ui/digit-off.bmp
+  mines/ui/resources/mines-solver.ui \
+  mines/ui/resources/flag.svg \
+  mines/ui/resources/mine.svg \
+  mines/ui/resources/smiley-cool.svg \
+  mines/ui/resources/smiley-cry.svg \
+  mines/ui/resources/smiley-happy.svg \
+  mines/ui/resources/smiley-scared.svg \
+  mines/ui/resources/digit-0.bmp \
+  mines/ui/resources/digit-1.bmp \
+  mines/ui/resources/digit-2.bmp \
+  mines/ui/resources/digit-3.bmp \
+  mines/ui/resources/digit-4.bmp \
+  mines/ui/resources/digit-5.bmp \
+  mines/ui/resources/digit-6.bmp \
+  mines/ui/resources/digit-7.bmp \
+  mines/ui/resources/digit-8.bmp \
+  mines/ui/resources/digit-9.bmp \
+  mines/ui/resources/digit-off.bmp
 
 BUILT_SOURCES = \
   mines/ui/resources.cpp \
@@ -71,7 +71,7 @@ BUILT_SOURCES = \
 EXTRA_DIST = mines/ui/ui.gresource.xml $(RESOURCE_FILES)
 
 mines/ui/resources.cpp: mines/ui/ui.gresource.xml $(RESOURCE_FILES)
-	@GLIB_COMPILE_RESOURCES@ --generate-source --manual-register --internal --target="$@" --sourcedir="$(top_srcdir)/mines/ui" $<
+	@GLIB_COMPILE_RESOURCES@ --generate-source --manual-register --internal --target="$@" --sourcedir="$(top_srcdir)/mines/ui/resources" $<
 
 mines/ui/resources.h: mines/ui/ui.gresource.xml $(RESOURCE_FILES)
-	@GLIB_COMPILE_RESOURCES@ --generate-header --manual-register --internal --target="$@" --sourcedir="$(top_srcdir)/mines/ui" $<
+	@GLIB_COMPILE_RESOURCES@ --generate-header --manual-register --internal --target="$@" --sourcedir="$(top_srcdir)/mines/ui/resources" $<
