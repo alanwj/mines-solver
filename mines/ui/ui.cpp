@@ -17,7 +17,8 @@ namespace ui {
 namespace {
 
 constexpr const char* kApplicationId = "com.alanwj.mines-solver";
-constexpr const char* kUiResourcePath = "/com/alanwj/mines-solver/mines-solver.ui";
+constexpr const char* kUiResourcePath =
+    "/com/alanwj/mines-solver/mines-solver.ui";
 
 // The master GTK application.
 class MinesApplication : public Gtk::Application {

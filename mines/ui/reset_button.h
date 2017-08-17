@@ -1,7 +1,6 @@
 #ifndef MINES_UI_RESET_BUTTON_H_
 #define MINES_UI_RESET_BUTTON_H_
 
-#include <gdkmm/pixbuf.h>
 #include <glibmm/refptr.h>
 #include <gtkmm/builder.h>
 #include <gtkmm/button.h>
@@ -19,6 +18,9 @@ namespace ui {
 // the game state via the image displayed.
 class ResetButton : public Gtk::Button, public EventSubscriber {
  public:
+  // Contructs a ResetButton from the underlying C object and a builder.
+  //
+  // This constructor supports Gtk::Builder::get_widget_derived.
   ResetButton(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>&);
 
   // Connects the button to Minefield mouse events, allowing it to change images
@@ -30,12 +32,12 @@ class ResetButton : public Gtk::Button, public EventSubscriber {
   // The button will subscribe to the game for event notifications.
   void Reset(Game& game);
 
+ private:
+  // Handler for the realize signal.
+  void on_realize() final;
+
   // Updates the button image based on event notifications.
   void NotifyEvent(const Event& event) final;
-
- private:
-  // Creates the pixbuf for a smiley from the provided resource path.
-  static Glib::RefPtr<Gdk::Pixbuf> CreateSmiley(const char* resource_path);
 
   // Updates the button image based on game state.
   void UpdateImage();

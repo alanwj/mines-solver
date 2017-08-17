@@ -9,7 +9,10 @@
 namespace mines {
 namespace ui {
 
+// The square size of the smiley pixbufs.
 constexpr std::size_t kPixbufSize = 30;
+
+// The resource paths for the smiley graphics.
 constexpr const char* kSmileyHappyResourcePath =
     "/com/alanwj/mines-solver/smiley-happy.svg";
 constexpr const char* kSmileyCryResourcePath =
@@ -21,11 +24,7 @@ constexpr const char* kSmileyScaredResourcePath =
 
 ResetButton::ResetButton(BaseObjectType* cobj,
                          const Glib::RefPtr<Gtk::Builder>&)
-    : Gtk::Button(cobj),
-      smiley_happy_(CreateSmiley(kSmileyHappyResourcePath)),
-      smiley_cry_(CreateSmiley(kSmileyCryResourcePath)),
-      smiley_cool_(CreateSmiley(kSmileyCoolResourcePath)),
-      smiley_scared_(CreateSmiley(kSmileyScaredResourcePath)) {
+    : Gtk::Button(cobj) {
   set_image(smiley_happy_);
 }
 
@@ -42,6 +41,21 @@ void ResetButton::Reset(Game& game) {
   UpdateImage();
 }
 
+void ResetButton::on_realize() {
+  using compat::CreatePixbufFromResource;
+
+  Gtk::Button::on_realize();
+
+  smiley_happy_.set(CreatePixbufFromResource(kSmileyHappyResourcePath,
+                                             kPixbufSize, kPixbufSize));
+  smiley_cry_.set(CreatePixbufFromResource(kSmileyCryResourcePath, kPixbufSize,
+                                           kPixbufSize));
+  smiley_cool_.set(CreatePixbufFromResource(kSmileyCoolResourcePath,
+                                            kPixbufSize, kPixbufSize));
+  smiley_scared_.set(CreatePixbufFromResource(kSmileyScaredResourcePath,
+                                              kPixbufSize, kPixbufSize));
+}
+
 void ResetButton::NotifyEvent(const Event& event) {
   switch (event.type) {
     case Event::Type::WIN:
@@ -52,11 +66,6 @@ void ResetButton::NotifyEvent(const Event& event) {
       // We don't care about other event types.
       break;
   }
-}
-
-Glib::RefPtr<Gdk::Pixbuf> ResetButton::CreateSmiley(const char* resource_path) {
-  return compat::CreatePixbufFromResource(resource_path, kPixbufSize,
-                                          kPixbufSize);
 }
 
 void ResetButton::UpdateImage() {

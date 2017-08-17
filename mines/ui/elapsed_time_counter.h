@@ -27,11 +27,11 @@ class ElapsedTimeCounter : public Counter, public EventSubscriber {
   // The counter will subscribe to the game for event notifications.
   void Reset(Game& game);
 
+ private:
   // On the first notification, the counter will begin updating at regular
   // intervals. Subsequent notifications are ignored.
   void NotifyEvent(const Event&) final;
 
- private:
   // Updates the displayed elapsed time.
   bool UpdateElapsedTime();
 

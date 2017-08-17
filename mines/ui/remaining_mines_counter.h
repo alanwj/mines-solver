@@ -29,10 +29,10 @@ class RemainingMinesCounter : public Counter, public EventSubscriber {
   // The counter will subscribe to the game for event notifications.
   void Reset(Game& game);
 
+ private:
   // Updates the counter based on the event.
   void NotifyEvent(const Event& event) final;
 
- private:
   // Updates the currently displayed count.
   void UpdateCount();
 

@@ -24,14 +24,13 @@ class Counter : public Gtk::DrawingArea {
   // Sets the value to display in the widget.
   void SetValue(std::size_t value);
 
- protected:
+ private:
   // Handler for the realize signal.
   void on_realize() final;
 
   // Handler for the draw signal.
   bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr) final;
 
- private:
   // Loads all of the necessary pixbufs from the global resources.
   void LoadPixbufs();
 

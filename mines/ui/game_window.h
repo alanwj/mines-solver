@@ -22,6 +22,9 @@ namespace ui {
 // The main window for the game.
 class GameWindow : public Gtk::ApplicationWindow {
  public:
+  // Contructs a GameWindow from the underlying C object and a builder.
+  //
+  // This constructor supports Gtk::Builder::get_widget_derived.
   GameWindow(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& builder);
 
  private:
