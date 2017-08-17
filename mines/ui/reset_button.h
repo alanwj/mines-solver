@@ -30,14 +30,12 @@ class ResetButton : public Gtk::Button, public EventSubscriber {
   // This constructor supports Gtk::Builder::get_widget_derived.
   ResetButton(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>&);
 
-  // Resets the button for a new game.
-  //
-  // The button will subscribe to the game for event notifications.
-  void Reset(Game& game);
-
  private:
   // Handler for the realize signal.
   void on_realize() final;
+
+  // Resets the button for a new game.
+  void NotifyEventSubscription(Game* game) final;
 
   // Updates the button image based on event notifications.
   void NotifyEvent(const Event& event) final;

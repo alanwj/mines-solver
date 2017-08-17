@@ -25,12 +25,10 @@ class ElapsedTimeCounter : public Counter, public EventSubscriber {
   ElapsedTimeCounter(BaseObjectType* cobj,
                      const Glib::RefPtr<Gtk::Builder>& builder);
 
-  // Resets the counter for a new game.
-  //
-  // The counter will subscribe to the game for event notifications.
-  void Reset(Game& game);
-
  private:
+  // Resets the counter for a new game.
+  void NotifyEventSubscription(Game* game) final;
+
   // On the first notification, the counter will begin updating at regular
   // intervals. Subsequent notifications are ignored.
   void NotifyEvent(const Event&) final;

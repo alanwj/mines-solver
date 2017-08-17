@@ -39,10 +39,12 @@ GameWindow::GameWindow(BaseObjectType* cobj,
 void GameWindow::NewGame() {
   game_ = mines::NewGame(16, 30, 99, std::time(nullptr));
   solver_ = solver::New(solver_algorithm_, *game_);
-  mine_field_->Reset(*game_);
-  reset_button_->Reset(*game_);
-  remaining_mines_counter_->Reset(*game_);
-  elapsed_time_counter_->Reset(*game_);
+
+  // Subscribe UI widgets to the new game, causing them to reset.
+  game_->Subscribe(mine_field_);
+  game_->Subscribe(reset_button_);
+  game_->Subscribe(remaining_mines_counter_);
+  game_->Subscribe(elapsed_time_counter_);
 }
 
 void GameWindow::NewSolverAlgorithm(const Glib::ustring& target) {

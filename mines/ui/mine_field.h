@@ -53,6 +53,8 @@ struct Cell {
 }  // namespace detail
 
 // A mine field widget.
+//
+// When subscribed to a game the MineField will automatically update.
 class MineField : public Gtk::DrawingArea, public EventSubscriber {
  public:
   // Gets the MineField from the builder.
@@ -63,15 +65,15 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
   // This constructor supports Gtk::Builder::get_widget_derived.
   MineField(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>&);
 
-  // Resets the internal state for a new game.
-  void Reset(Game& game);
-
   // The signal sent when an Action is peformed on the mine field.
   //
   // The action type will be one of: UNCOVER, CHORD, or FLAG.
   sigc::signal<void, Action>& signal_action() { return signal_action_; }
 
  private:
+  // Resets the internal state for a new game.
+  void NotifyEventSubscription(Game* game) final;
+
   // Updates the visual state based on the event.
   //
   // If the event is not adjacent to the last clicked cell, the event may be

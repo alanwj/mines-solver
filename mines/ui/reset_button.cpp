@@ -42,12 +42,6 @@ ResetButton::ResetButton(BaseObjectType* cobj,
   set_image(smiley_happy_);
 }
 
-void ResetButton::Reset(Game& game) {
-  game_ = &game;
-  game_->Subscribe(this);
-  UpdateImage();
-}
-
 void ResetButton::on_realize() {
   using compat::CreatePixbufFromResource;
 
@@ -61,6 +55,11 @@ void ResetButton::on_realize() {
                                             kPixbufSize, kPixbufSize));
   smiley_scared_.set(CreatePixbufFromResource(kSmileyScaredResourcePath,
                                               kPixbufSize, kPixbufSize));
+}
+
+void ResetButton::NotifyEventSubscription(Game* game) {
+  game_ = game;
+  UpdateImage();
 }
 
 void ResetButton::NotifyEvent(const Event& event) {

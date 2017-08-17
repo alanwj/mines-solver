@@ -27,12 +27,10 @@ class RemainingMinesCounter : public Counter, public EventSubscriber {
   RemainingMinesCounter(BaseObjectType* cobj,
                         const Glib::RefPtr<Gtk::Builder>& builder);
 
-  // Resets the counter for a new game.
-  //
-  // The counter will subscribe to the game for event notifications.
-  void Reset(Game& game);
-
  private:
+  // Resets the counter for a new game.
+  void NotifyEventSubscription(Game* game) final;
+
   // Updates the counter based on the event.
   void NotifyEvent(const Event& event) final;
 

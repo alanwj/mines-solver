@@ -22,11 +22,9 @@ ElapsedTimeCounter::ElapsedTimeCounter(
     BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& builder)
     : Counter(cobj, builder) {}
 
-void ElapsedTimeCounter::Reset(Game& game) {
+void ElapsedTimeCounter::NotifyEventSubscription(Game* game) {
+  game_ = game;
   timer_.disconnect();
-
-  game_ = &game;
-  game_->Subscribe(this);
   SetValue(0);
 }
 

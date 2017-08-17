@@ -280,11 +280,9 @@ MineField* MineField::Get(const Glib::RefPtr<Gtk::Builder>& builder) {
 MineField::MineField(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>&)
     : Gtk::DrawingArea(cobj) {}
 
-void MineField::Reset(Game& game) {
-  game.Subscribe(this);
-
-  rows_ = game.GetRows();
-  cols_ = game.GetCols();
+void MineField::NotifyEventSubscription(Game* game) {
+  rows_ = game->GetRows();
+  cols_ = game->GetCols();
   grid_.Reset(rows_, cols_);
 
   const int min_width = kCellSize * cols_ + 2 * kFrameSize;

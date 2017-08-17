@@ -15,10 +15,9 @@ RemainingMinesCounter::RemainingMinesCounter(
     BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& builder)
     : Counter(cobj, builder) {}
 
-void RemainingMinesCounter::Reset(Game& game) {
+void RemainingMinesCounter::NotifyEventSubscription(Game* game) {
+  game_ = game;
   flags_ = 0;
-  game_ = &game;
-  game_->Subscribe(this);
   SetValue(game_->GetMines());
 }
 
