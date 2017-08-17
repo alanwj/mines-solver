@@ -191,6 +191,7 @@ class GameImpl : public Game {
 
   void Subscribe(EventSubscriber* subscriber) final {
     subscribers_.push_back(subscriber);
+    subscriber->NotifyEventSubscription(this);
   }
 
   std::size_t GetRows() const final { return grid_.GetRows(); }

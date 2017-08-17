@@ -96,6 +96,11 @@ class EventSubscriber {
  public:
   virtual ~EventSubscriber() = default;
 
+  // Notifies the subscriber that it has been subscribed to a game.
+  //
+  // Overriding this method is optional.
+  virtual void NotifyEventSubscription(class Game* game) {}
+
   // Notifies the subscriber that an event occurred.
   virtual void NotifyEvent(const Event& event) = 0;
 };
