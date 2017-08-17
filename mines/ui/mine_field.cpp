@@ -13,9 +13,9 @@
 namespace mines {
 namespace ui {
 
+using detail::Cell;
 using detail::DrawingDimensions;
 using detail::Pixbufs;
-using detail::Cell;
 
 namespace {
 
@@ -281,12 +281,12 @@ MineField::MineField(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>&)
     : Gtk::DrawingArea(cobj) {}
 
 void MineField::NotifyEventSubscription(Game* game) {
-  rows_ = game->GetRows();
-  cols_ = game->GetCols();
-  grid_.Reset(rows_, cols_);
+  const std::size_t rows = game->GetRows();
+  const std::size_t cols = game->GetCols();
+  grid_.Reset(rows, cols);
 
-  const int min_width = kCellSize * cols_ + 2 * kFrameSize;
-  const int min_height = kCellSize * rows_ + 2 * kFrameSize;
+  const int min_width = kCellSize * cols + 2 * kFrameSize;
+  const int min_height = kCellSize * rows + 2 * kFrameSize;
 
   set_size_request(min_width, min_height);
 
@@ -330,6 +330,13 @@ void MineField::on_size_allocate(Gtk::Allocation& allocation) {
 }
 
 bool MineField::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
+  const std::size_t rows = grid_.GetRows();
+  const std::size_t cols = grid_.GetCols();
+
+  if (rows == 0 || cols == 0) {
+    return false;
+  }
+
   // We start by computing the top left (min) and bottom right (max) cell that
   // will need to be drawn.
   double clip_x;
@@ -345,7 +352,7 @@ bool MineField::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
 
   CellRef max_cell = GetCellRefFromPoint(clip_width - 1.0, clip_height - 1.0);
   if (max_cell.cell == nullptr) {
-    max_cell = CellRef{nullptr, rows_ - 1, cols_ - 1};
+    max_cell = CellRef{nullptr, rows - 1, cols - 1};
   }
 
   // Defaults for drawing lines.
@@ -506,10 +513,17 @@ void MineField::QueueDrawCellRegion(const CellRegion& region) {
 }
 
 void MineField::UpdateDrawingDimensions(int width, int height) {
-  dim_.cell_size = std::min((width - 2 * kFrameSize) / cols_,
-                            (height - 2 * kFrameSize) / rows_);
-  dim_.width = dim_.cell_size * cols_ + 2 * kFrameSize;
-  dim_.height = dim_.cell_size * rows_ + 2 * kFrameSize;
+  const std::size_t rows = grid_.GetRows();
+  const std::size_t cols = grid_.GetCols();
+
+  if (rows == 0 || cols == 0) {
+    return;
+  }
+
+  dim_.cell_size = std::min((width - 2 * kFrameSize) / cols,
+                            (height - 2 * kFrameSize) / rows);
+  dim_.width = dim_.cell_size * cols + 2 * kFrameSize;
+  dim_.height = dim_.cell_size * rows + 2 * kFrameSize;
 
   // Center the part of the drawing area we are actually using within the
   // total available space.

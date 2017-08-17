@@ -176,10 +176,6 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
   // last clicked cell.
   bool IsAdjacentToClickedCell(std::size_t row, std::size_t col) const;
 
-  // The number of rows and columns in the mine field.
-  std::size_t rows_;
-  std::size_t cols_;
-
   // Knowledge about the grid of cells.
   Grid<detail::Cell> grid_;
 
