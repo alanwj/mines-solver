@@ -1,6 +1,10 @@
 #ifndef MINES_UI_BUILDER_WIDGET_H_
 #define MINES_UI_BUILDER_WIDGET_H_
 
+#include <glibmm/refptr.h>
+#include <glibmm/ustring.h>
+#include <gtkmm/builder.h>
+
 namespace mines {
 namespace ui {
 
