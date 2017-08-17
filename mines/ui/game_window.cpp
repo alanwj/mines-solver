@@ -8,11 +8,20 @@
 namespace mines {
 namespace ui {
 
-std::unique_ptr<GameWindow> GameWindow::Get(
-    const Glib::RefPtr<Gtk::Builder>& builder) {
+const GameWindow::Difficulty GameWindow::kBeginnerDifficulty = {8, 8, 10};
+const GameWindow::Difficulty GameWindow::kIntermediateDifficulty = {16, 16, 40};
+const GameWindow::Difficulty GameWindow::kExpertDifficulty = {16, 30, 99};
+
+GameWindow* GameWindow::Get(const Glib::RefPtr<Gtk::Builder>& builder,
+                            const Difficulty& difficulty) {
   GameWindow* window = nullptr;
   builder->get_widget_derived("game-window", window);
-  return std::unique_ptr<GameWindow>(window);
+
+  // When support for Ubuntu 14.04 is dropped we can pass the difficulty as a
+  // constructor parameter via get_widget_derived.
+  window->difficulty_ = difficulty;
+
+  return window;
 }
 
 GameWindow::GameWindow(BaseObjectType* cobj,
@@ -32,12 +41,18 @@ GameWindow::GameWindow(BaseObjectType* cobj,
 
   reset_button_->signal_clicked().connect(
       sigc::mem_fun(this, &GameWindow::NewGame));
+}
 
+void GameWindow::on_realize() {
+  // A game must exist before the window is realized. We can't do this in the
+  // constructor because no difficulty has yet been set.
   NewGame();
+  Gtk::ApplicationWindow::on_realize();
 }
 
 void GameWindow::NewGame() {
-  game_ = mines::NewGame(16, 30, 99, std::time(nullptr));
+  game_ = mines::NewGame(difficulty_.rows, difficulty_.cols, difficulty_.mines,
+                         std::time(nullptr));
   solver_ = solver::New(solver_algorithm_, *game_);
 
   // Subscribe UI widgets to the new game, causing them to reset.

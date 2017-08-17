@@ -1,6 +1,7 @@
 #ifndef MINES_UI_MINES_WINDOW_H_
 #define MINES_UI_MINES_WINDOW_H_
 
+#include <cstddef>
 #include <memory>
 
 #include <giomm/simpleaction.h>
@@ -22,12 +23,21 @@ namespace ui {
 // The main window for the game.
 class GameWindow : public Gtk::ApplicationWindow {
  public:
+  // The difficulty setting for the game.
+  struct Difficulty {
+    std::size_t rows;
+    std::size_t cols;
+    std::size_t mines;
+  };
+
+  // Premade common difficulties.
+  static const Difficulty kBeginnerDifficulty;
+  static const Difficulty kIntermediateDifficulty;
+  static const Difficulty kExpertDifficulty;
+
   // Gets the GameWindow from the builder.
-  //
-  // Warning: Calling this method multiple times on the same builder will result
-  // in memory errors.
-  static std::unique_ptr<GameWindow> Get(
-      const Glib::RefPtr<Gtk::Builder>& builder);
+  static GameWindow* Get(const Glib::RefPtr<Gtk::Builder>& builder,
+                         const Difficulty& difficulty);
 
   // Contructs a GameWindow from the underlying C object and a builder.
   //
@@ -35,6 +45,9 @@ class GameWindow : public Gtk::ApplicationWindow {
   GameWindow(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& builder);
 
  private:
+  // Handler for the realize signal.
+  void on_realize() final;
+
   // Starts a new game.
   void NewGame();
 
@@ -63,6 +76,9 @@ class GameWindow : public Gtk::ApplicationWindow {
 
   // The algorithm used in current and new games.
   solver::Algorithm solver_algorithm_;
+
+  // Parameters for creating new games.
+  Difficulty difficulty_ = kExpertDifficulty;
 
   // The current game.
   std::unique_ptr<Game> game_;

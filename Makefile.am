@@ -45,7 +45,8 @@ mines_solver_LDADD = @GTKMM_LIBS@
 
 
 RESOURCE_FILES = \
-  mines/ui/resources/mines-solver.ui \
+  mines/ui/resources/game_window.ui \
+  mines/ui/resources/menu.ui \
   mines/ui/resources/flag.svg \
   mines/ui/resources/mine.svg \
   mines/ui/resources/smiley-cool.svg \
