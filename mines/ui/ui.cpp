@@ -25,7 +25,7 @@ class MinesApplication : public Gtk::Application {
  public:
   MinesApplication() : Gtk::Application(kApplicationId) {}
 
- protected:
+ private:
   // Handler for the startup signal. This handles registering global resources
   // and building any menus and other resources required.
   void on_startup() final {
@@ -50,7 +50,6 @@ class MinesApplication : public Gtk::Application {
     window_->present();
   }
 
- private:
   // Deletes the game window when it received a hide signal.
   void OnHideWindow() { window_.reset(); }
 

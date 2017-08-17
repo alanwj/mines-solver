@@ -20,13 +20,6 @@
 namespace mines {
 namespace ui {
 
-// Encapsulates a simple RGB color.
-struct Color {
-  double r;
-  double g;
-  double b;
-};
-
 // The dimensions of the actual area upon which the mine field will be drawn.
 // This is a subset of the actual allocated area.
 struct DrawingDimensions {
@@ -58,18 +51,18 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
   // Resets the internal state for a new game.
   void Reset(Game& game);
 
-  // Updates the visual state based on the event.
-  //
-  // If the event is not adjacent to the last clicked cell, the event may be
-  // queued for later handling.
-  void NotifyEvent(const Event& event) final;
-
   // The signal sent when an Action is peformed on the mine field.
   //
   // The action type will be one of: UNCOVER, CHORD, or FLAG.
   sigc::signal<void, Action>& signal_action() { return signal_action_; }
 
  protected:
+  // Updates the visual state based on the event.
+  //
+  // If the event is not adjacent to the last clicked cell, the event may be
+  // queued for later handling.
+  void NotifyEvent(const Event& event) final;
+
   // Recomputes values necessary to resize the mine field.
   bool on_configure_event(GdkEventConfigure* event) final;
 
@@ -150,10 +143,6 @@ class MineField : public Gtk::DrawingArea, public EventSubscriber {
 
   // Reload all pixbufs at current cell dimensions.
   void UpdatePixbufs();
-
-  // Sets the context color.
-  void SetColor(const Cairo::RefPtr<Cairo::Context>& cr,
-                const Color& color) const;
 
   // Draws the frame surrounding the mine field.
   void DrawFrame(const Cairo::RefPtr<Cairo::Context>& cr);

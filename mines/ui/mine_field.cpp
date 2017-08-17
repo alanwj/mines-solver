@@ -32,6 +32,13 @@ constexpr const char* kMineResourcePath = "/com/alanwj/mines-solver/mine.svg";
 // Resource path for the flag graphic.
 constexpr const char* kFlagResourcePath = "/com/alanwj/mines-solver/flag.svg";
 
+// Encapsulates a simple RGB color.
+struct Color {
+  double r;
+  double g;
+  double b;
+};
+
 // The color to use for numbers 1 through 8.
 constexpr std::array<Color, 8> kNumberColor{{
     {0.0, 0.0, 1.0},  // 1
@@ -51,6 +58,11 @@ constexpr Color kLosingMineCellColor{1.0, 0.0, 0.0};
 constexpr Color kCellBorderColor{0.5, 0.5, 0.5};
 constexpr Color kLightBevelColor{1.0, 1.0, 1.0};
 constexpr Color kDarkBevelColor{0.5, 0.5, 0.5};
+
+// Sets the source color in the specified context.
+void SetColor(const Cairo::RefPtr<Cairo::Context>& cr, const Color& color) {
+  cr->set_source_rgb(color.r, color.g, color.b);
+}
 
 // A flyweight class to encapsulate the process of drawing a cell.
 //
@@ -101,14 +113,9 @@ class CellDrawFlyweight {
   }
 
  private:
-  // Sets the context source color.
-  void SetColor(const Color& color) const {
-    cr_->set_source_rgba(color.r, color.g, color.b, 1.0);
-  }
-
   // Fills the cell with the specified color.
   void FillCell(const Color& color) const {
-    SetColor(color);
+    SetColor(cr_, color);
     cr_->rectangle(0.0, 0.0, dim_.cell_size, dim_.cell_size);
     cr_->fill();
   }
@@ -150,7 +157,7 @@ class CellDrawFlyweight {
   // Draws an empty cell.
   void DrawEmpty(const Color& color) const {
     FillCell(color);
-    SetColor(kCellBorderColor);
+    SetColor(cr_, kCellBorderColor);
     if (row_ != 0) {
       DrawHLine(0, 0, dim_.cell_size);
     }
@@ -164,7 +171,7 @@ class CellDrawFlyweight {
   void DrawUncovered() const {
     DrawEmpty(kCellColor);
     if (cell_.adjacent_mines > 0 && cell_.adjacent_mines <= 8) {
-      SetColor(kNumberColor[cell_.adjacent_mines - 1]);
+      SetColor(cr_, kNumberColor[cell_.adjacent_mines - 1]);
       DrawChar('0' + cell_.adjacent_mines);
     }
   }
@@ -172,7 +179,7 @@ class CellDrawFlyweight {
   // Draws a cell that is visually pressed by a mouse action.
   void DrawPressed() const {
     FillCell(kCellColor);
-    SetColor(kDarkBevelColor);
+    SetColor(cr_, kDarkBevelColor);
     DrawHLine(0, 0, dim_.cell_size);
     DrawVLine(0, 0, dim_.cell_size);
     cr_->stroke();
@@ -183,7 +190,7 @@ class CellDrawFlyweight {
     FillCell(kCellColor);
 
     // Light bevel on top.
-    SetColor(kLightBevelColor);
+    SetColor(cr_, kLightBevelColor);
     DrawHLine(0, 0, dim_.cell_size - 1);
     DrawHLine(0, 1, dim_.cell_size - 2);
 
@@ -193,7 +200,7 @@ class CellDrawFlyweight {
     cr_->stroke();
 
     // Dark bevel on bottom.
-    SetColor(kDarkBevelColor);
+    SetColor(cr_, kDarkBevelColor);
     DrawHLine(1, dim_.cell_size - 1, dim_.cell_size - 1);
     DrawHLine(2, dim_.cell_size - 2, dim_.cell_size - 2);
 
@@ -235,7 +242,7 @@ class CellDrawFlyweight {
   void DrawBadFlag() const {
     DrawFlagged();
     cr_->save();
-    SetColor({1.0, 0.0, 0.0});
+    SetColor(cr_, {1.0, 0.0, 0.0});
     cr_->scale(dim_.cell_size, dim_.cell_size);
     cr_->set_line_width(.15);
     cr_->set_line_cap(Cairo::LINE_CAP_ROUND);
@@ -511,11 +518,6 @@ Glib::RefPtr<Gdk::Pixbuf> MineField::LoadPixbuf(
 void MineField::UpdatePixbufs() {
   pixbufs_.mine = LoadPixbuf(kMineResourcePath);
   pixbufs_.flag = LoadPixbuf(kFlagResourcePath);
-}
-
-void MineField::SetColor(const Cairo::RefPtr<Cairo::Context>& cr,
-                         const Color& color) const {
-  cr->set_source_rgba(color.r, color.g, color.b, 1.0);
 }
 
 void MineField::DrawFrame(const Cairo::RefPtr<Cairo::Context>& cr) {
