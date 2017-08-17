@@ -13,9 +13,9 @@
 namespace mines {
 namespace ui {
 
+using detail::Cell;
 using detail::DrawingDimensions;
 using detail::Pixbufs;
-using detail::Cell;
 
 namespace {
 

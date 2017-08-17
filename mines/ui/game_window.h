@@ -45,9 +45,6 @@ class GameWindow : public Gtk::ApplicationWindow {
   GameWindow(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& builder);
 
  private:
-  // Handler for the realize signal.
-  void on_realize() final;
-
   // Starts a new game.
   void NewGame();
 

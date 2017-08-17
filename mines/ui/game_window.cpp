@@ -20,6 +20,7 @@ GameWindow* GameWindow::Get(const Glib::RefPtr<Gtk::Builder>& builder,
   // When support for Ubuntu 14.04 is dropped we can pass the difficulty as a
   // constructor parameter via get_widget_derived.
   window->difficulty_ = difficulty;
+  window->NewGame();
 
   return window;
 }
@@ -41,13 +42,6 @@ GameWindow::GameWindow(BaseObjectType* cobj,
 
   reset_button_->signal_clicked().connect(
       sigc::mem_fun(this, &GameWindow::NewGame));
-}
-
-void GameWindow::on_realize() {
-  // A game must exist before the window is realized. We can't do this in the
-  // constructor because no difficulty has yet been set.
-  NewGame();
-  Gtk::ApplicationWindow::on_realize();
 }
 
 void GameWindow::NewGame() {
