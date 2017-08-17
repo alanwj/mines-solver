@@ -23,7 +23,6 @@ mines_solver_SOURCES = \
   mines/solver/nop.h \
   mines/solver/solver.cpp \
   mines/solver/solver.h \
-  mines/ui/builder_widget.h \
   mines/ui/counter.cpp \
   mines/ui/counter.h \
   mines/ui/elapsed_time_counter.cpp \

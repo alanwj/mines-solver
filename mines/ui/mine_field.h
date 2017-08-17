@@ -55,6 +55,12 @@ struct Cell {
 // A mine field widget.
 class MineField : public Gtk::DrawingArea, public EventSubscriber {
  public:
+  // Gets the MineField from the builder.
+  static MineField* Get(const Glib::RefPtr<Gtk::Builder>& builder);
+
+  // Contructs a MineField from the underlying C object and a builder.
+  //
+  // This constructor supports Gtk::Builder::get_widget_derived.
   MineField(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>&);
 
   // Resets the internal state for a new game.

@@ -11,6 +11,13 @@ namespace ui {
 // The period, in milliseconds, between updates to the counter.
 constexpr std::size_t kUpdatePeriodMs = 100;
 
+ElapsedTimeCounter* ElapsedTimeCounter::Get(
+    const Glib::RefPtr<Gtk::Builder>& builder) {
+  ElapsedTimeCounter* elapsed_time_counter = nullptr;
+  builder->get_widget_derived("elapsed-time-counter", elapsed_time_counter);
+  return elapsed_time_counter;
+}
+
 ElapsedTimeCounter::ElapsedTimeCounter(
     BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& builder)
     : Counter(cobj, builder) {}

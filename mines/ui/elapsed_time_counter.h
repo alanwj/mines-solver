@@ -16,6 +16,9 @@ namespace ui {
 // When subscribed to a game via Reset this counter will automatically update.
 class ElapsedTimeCounter : public Counter, public EventSubscriber {
  public:
+  // Gets the ElapsedTimeCounter from the builder.
+  static ElapsedTimeCounter* Get(const Glib::RefPtr<Gtk::Builder>& builder);
+
   // Contructs an ElapsedTimeCounter from the underlying C object and a builder.
   //
   // This constructor supports Gtk::Builder::get_widget_derived.

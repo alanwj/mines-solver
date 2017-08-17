@@ -271,6 +271,12 @@ class CellDrawFlyweight {
 
 }  // namespace
 
+MineField* MineField::Get(const Glib::RefPtr<Gtk::Builder>& builder) {
+  MineField* mine_field = nullptr;
+  builder->get_widget_derived("mine-field", mine_field);
+  return mine_field;
+}
+
 MineField::MineField(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>&)
     : Gtk::DrawingArea(cobj) {}
 

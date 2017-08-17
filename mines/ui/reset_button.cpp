@@ -22,17 +22,24 @@ constexpr const char* kSmileyCoolResourcePath =
 constexpr const char* kSmileyScaredResourcePath =
     "/com/alanwj/mines-solver/smiley-scared.svg";
 
+ResetButton* ResetButton::Get(const Glib::RefPtr<Gtk::Builder>& builder,
+                              MineField& mine_field) {
+  ResetButton* reset_button = nullptr;
+  builder->get_widget_derived("reset-button", reset_button);
+
+  // Connect the reset button to the mine field.
+  mine_field.signal_button_press_event().connect(
+      sigc::mem_fun(reset_button, &ResetButton::OnMineFieldButtonDown));
+  mine_field.signal_button_release_event().connect(
+      sigc::mem_fun(reset_button, &ResetButton::OnMineFieldButtonRelease));
+
+  return reset_button;
+}
+
 ResetButton::ResetButton(BaseObjectType* cobj,
                          const Glib::RefPtr<Gtk::Builder>&)
     : Gtk::Button(cobj) {
   set_image(smiley_happy_);
-}
-
-void ResetButton::ConnectToMineField(MineField& mine_field) {
-  mine_field.signal_button_press_event().connect(
-      sigc::mem_fun(this, &ResetButton::OnMineFieldButtonDown));
-  mine_field.signal_button_release_event().connect(
-      sigc::mem_fun(this, &ResetButton::OnMineFieldButtonRelease));
 }
 
 void ResetButton::Reset(Game& game) {

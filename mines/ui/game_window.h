@@ -22,6 +22,13 @@ namespace ui {
 // The main window for the game.
 class GameWindow : public Gtk::ApplicationWindow {
  public:
+  // Gets the GameWindow from the builder.
+  //
+  // Warning: Calling this method multiple times on the same builder will result
+  // in memory errors.
+  static std::unique_ptr<GameWindow> Get(
+      const Glib::RefPtr<Gtk::Builder>& builder);
+
   // Contructs a GameWindow from the underlying C object and a builder.
   //
   // This constructor supports Gtk::Builder::get_widget_derived.
@@ -40,7 +47,7 @@ class GameWindow : public Gtk::ApplicationWindow {
   void HandleAction(Action action);
 
   // The mine field.
-  MineField* field_;
+  MineField* mine_field_;
 
   // The reset button.
   ResetButton* reset_button_;

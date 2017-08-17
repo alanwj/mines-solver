@@ -17,6 +17,9 @@ namespace ui {
 // When subscribed to a game via Reset this counter will automatically update.
 class RemainingMinesCounter : public Counter, public EventSubscriber {
  public:
+  // Gets the RemainingMinesCounter from the builder.
+  static RemainingMinesCounter* Get(const Glib::RefPtr<Gtk::Builder>& builder);
+
   // Contructs a RemainingMinesCounter from the underlying C object and a
   // builder.
   //

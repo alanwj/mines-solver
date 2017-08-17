@@ -5,31 +5,33 @@
 
 #include <sigc++/functors/mem_fun.h>
 
-#include "mines/ui/builder_widget.h"
-
 namespace mines {
 namespace ui {
+
+std::unique_ptr<GameWindow> GameWindow::Get(
+    const Glib::RefPtr<Gtk::Builder>& builder) {
+  GameWindow* window = nullptr;
+  builder->get_widget_derived("game-window", window);
+  return std::unique_ptr<GameWindow>(window);
+}
 
 GameWindow::GameWindow(BaseObjectType* cobj,
                        const Glib::RefPtr<Gtk::Builder>& builder)
     : Gtk::ApplicationWindow(cobj),
-      field_(GetBuilderWidget<MineField>(builder, "mine-field")),
-      reset_button_(GetBuilderWidget<ResetButton>(builder, "reset-button")),
-      remaining_mines_counter_(GetBuilderWidget<RemainingMinesCounter>(
-          builder, "remaining-mines-counter")),
-      elapsed_time_counter_(GetBuilderWidget<ElapsedTimeCounter>(
-          builder, "elapsed-time-counter")),
+      mine_field_(MineField::Get(builder)),
+      reset_button_(ResetButton::Get(builder, *mine_field_)),
+      remaining_mines_counter_(RemainingMinesCounter::Get(builder)),
+      elapsed_time_counter_(ElapsedTimeCounter::Get(builder)),
       solver_algorithm_(solver::Algorithm::NONE) {
   add_action("new", sigc::mem_fun(this, &GameWindow::NewGame));
   solver_action_ = add_action_radio_string(
       "solver", sigc::mem_fun(this, &GameWindow::NewSolverAlgorithm), "none");
 
-  field_->signal_action().connect(
+  mine_field_->signal_action().connect(
       sigc::mem_fun(this, &GameWindow::HandleAction));
 
   reset_button_->signal_clicked().connect(
       sigc::mem_fun(this, &GameWindow::NewGame));
-  reset_button_->ConnectToMineField(*field_);
 
   NewGame();
 }
@@ -37,7 +39,7 @@ GameWindow::GameWindow(BaseObjectType* cobj,
 void GameWindow::NewGame() {
   game_ = mines::NewGame(16, 30, 99, std::time(nullptr));
   solver_ = solver::New(solver_algorithm_, *game_);
-  field_->Reset(*game_);
+  mine_field_->Reset(*game_);
   reset_button_->Reset(*game_);
   remaining_mines_counter_->Reset(*game_);
   elapsed_time_counter_->Reset(*game_);

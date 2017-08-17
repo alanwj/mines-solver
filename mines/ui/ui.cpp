@@ -7,7 +7,6 @@
 #include <gtkmm/builder.h>
 #include <sigc++/functors/mem_fun.h>
 
-#include "mines/ui/builder_widget.h"
 #include "mines/ui/game_window.h"
 #include "mines/ui/resources.h"
 
@@ -43,7 +42,7 @@ class MinesApplication : public Gtk::Application {
   void on_activate() final {
     Gtk::Application::on_activate();
 
-    window_.reset(GetBuilderWidget<GameWindow>(builder_, "app-window"));
+    window_ = GameWindow::Get(builder_);
     add_window(*window_);
     window_->signal_hide().connect(
         sigc::mem_fun(this, &MinesApplication::OnHideWindow));

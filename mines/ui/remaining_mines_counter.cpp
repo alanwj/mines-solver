@@ -3,6 +3,14 @@
 namespace mines {
 namespace ui {
 
+RemainingMinesCounter* RemainingMinesCounter::Get(
+    const Glib::RefPtr<Gtk::Builder>& builder) {
+  RemainingMinesCounter* remaining_mines_counter = nullptr;
+  builder->get_widget_derived("remaining-mines-counter",
+                              remaining_mines_counter);
+  return remaining_mines_counter;
+}
+
 RemainingMinesCounter::RemainingMinesCounter(
     BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& builder)
     : Counter(cobj, builder) {}

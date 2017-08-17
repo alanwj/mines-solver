@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <object class="GtkApplicationWindow" id="app-window">
+  <object class="GtkApplicationWindow" id="game-window">
     <property name="title">Mines</property>
     <property name="window-position">GTK_WIN_POS_CENTER</property>
     <child>

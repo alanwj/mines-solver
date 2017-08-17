@@ -18,14 +18,17 @@ namespace ui {
 // the game state via the image displayed.
 class ResetButton : public Gtk::Button, public EventSubscriber {
  public:
+  // Gets the ResetButton from the builder.
+  //
+  // The returned ResetButton will listen to signals from the provided MineField
+  // to update its image as appropriate.
+  static ResetButton* Get(const Glib::RefPtr<Gtk::Builder>& builder,
+                          MineField& mine_field);
+
   // Contructs a ResetButton from the underlying C object and a builder.
   //
   // This constructor supports Gtk::Builder::get_widget_derived.
   ResetButton(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>&);
-
-  // Connects the button to Minefield mouse events, allowing it to change images
-  // based on mouse state.
-  void ConnectToMineField(MineField& mine_field);
 
   // Resets the button for a new game.
   //
