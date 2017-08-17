@@ -30,8 +30,6 @@ mines_solver_SOURCES = \
   mines/ui/elapsed_time_counter.h \
   mines/ui/game_window.cpp \
   mines/ui/game_window.h \
-  mines/ui/gtk_ui.cpp \
-  mines/ui/gtk_ui.h \
   mines/ui/mine_field.cpp \
   mines/ui/mine_field.h \
   mines/ui/remaining_mines_counter.cpp \
@@ -39,7 +37,9 @@ mines_solver_SOURCES = \
   mines/ui/reset_button.cpp \
   mines/ui/reset_button.h \
   mines/ui/resources.cpp \
-  mines/ui/resources.h
+  mines/ui/resources.h \
+  mines/ui/ui.cpp \
+  mines/ui/ui.h
 
 mines_solver_CPPFLAGS = @GTKMM_CFLAGS@
 mines_solver_LDADD = @GTKMM_LIBS@
