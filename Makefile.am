@@ -21,6 +21,8 @@ mines_solver_SOURCES = \
   mines/solver/local.h \
   mines/solver/nop.cpp \
   mines/solver/nop.h \
+  mines/solver/rule_analyzer.cpp \
+  mines/solver/rule_analyzer.h \
   mines/solver/solver.cpp \
   mines/solver/solver.h \
   mines/ui/counter.cpp \
