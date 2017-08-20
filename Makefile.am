@@ -17,12 +17,12 @@ mines_solver_SOURCES = \
   mines/game/game.h \
   mines/game/grid.h \
   mines/mines_solver_main.cpp \
+  mines/solver/constraint_analyzer.cpp \
+  mines/solver/constraint_analyzer.h \
   mines/solver/local.cpp \
   mines/solver/local.h \
   mines/solver/nop.cpp \
   mines/solver/nop.h \
-  mines/solver/region_analyzer.cpp \
-  mines/solver/region_analyzer.h \
   mines/solver/solver.cpp \
   mines/solver/solver.h \
   mines/ui/counter.cpp \
