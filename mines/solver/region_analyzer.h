@@ -1,5 +1,5 @@
-#ifndef MINES_SOLVER_RULE_ANALYZER_H_
-#define MINES_SOLVER_RULE_ANALYZER_H_
+#ifndef MINES_SOLVER_REGION_ANALYZER_H_
+#define MINES_SOLVER_REGION_ANALYZER_H_
 
 #include <cstddef>
 #include <map>
@@ -221,4 +221,4 @@ class RuleAnalyzer : public EventSubscriber {
 }  // namespace solver
 }  // namespace mines
 
-#endif  // MINES_SOLVER_RULE_ANALYZER_H_
+#endif  // MINES_SOLVER_REGION_ANALYZER_H_
