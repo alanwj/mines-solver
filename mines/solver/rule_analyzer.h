@@ -2,6 +2,7 @@
 #define MINES_SOLVER_RULE_ANALYZER_H_
 
 #include <cstddef>
+#include <map>
 #include <set>
 #include <utility>
 #include <vector>
@@ -12,26 +13,26 @@
 namespace mines {
 namespace solver {
 
-struct CellLoc {
+struct CellLocation {
   std::size_t row;
   std::size_t col;
 };
 
-inline bool operator<(const CellLoc& a, const CellLoc& b) {
+inline bool operator<(const CellLocation& a, const CellLocation& b) {
   return a.row < b.row || (a.row == b.row && a.col < b.col);
 }
 
-inline bool operator==(const CellLoc& a, const CellLoc& b) {
+inline bool operator==(const CellLocation& a, const CellLocation& b) {
   return a.row == b.row && a.col == b.col;
 }
 
-inline bool operator!=(const CellLoc& a, const CellLoc& b) {
+inline bool operator!=(const CellLocation& a, const CellLocation& b) {
   return a.row != b.row || a.col != b.col;
 }
 
 class Rule {
  public:
-  Rule(std::vector<CellLoc> locs, std::size_t mines, std::size_t flags)
+  Rule(std::vector<CellLocation> locs, std::size_t mines, std::size_t flags)
       : locs_(std::move(locs)), mines_(mines), flags_(flags) {}
 
   ~Rule() = default;
@@ -46,12 +47,12 @@ class Rule {
     return mines_ == 0 && locs_.empty();
   }
 
-  const std::vector<CellLoc>& GetLocations() const {
+  const std::vector<CellLocation>& GetLocations() const {
     return locs_;
   }
 
  private:
-  std::vector<CellLoc> locs_;
+  std::vector<CellLocation> locs_;
   std::size_t mines_;
   std::size_t flags_;
 };
@@ -75,9 +76,9 @@ class RuleAnalyzer : public EventSubscriber {
     return rules;
   }
 
-  void Stuff(std::vector<Rule>& rules) {
+  std::vector<std::vector<Rule>> AnalyzeRegions(std::vector<Rule>& rules) {
     for (const Rule& rule : rules) {
-      const std::vector<CellLoc>& locations = rule.GetLocations();
+      const std::vector<CellLocation>& locations = rule.GetLocations();
       if (locations.empty()) {
         continue;
       }
@@ -86,6 +87,23 @@ class RuleAnalyzer : public EventSubscriber {
         Union(*first, *it);
       }
     }
+
+    std::map<CellLocation, std::vector<Rule>> rule_map;
+    for (Rule& rule : rules) {
+      const std::vector<CellLocation>& locations = rule.GetLocations();
+      if (locations.empty()) {
+        continue;
+      }
+      CellLocation loc = Find(locations[0]);
+      rule_map[loc].push_back(std::move(rule));
+    }
+
+    std::vector<std::vector<Rule>> regions;
+    for (auto& p : rule_map) {
+      regions.push_back(std::move(p.second));
+    }
+
+    return regions;
   }
 
  private:
@@ -93,11 +111,11 @@ class RuleAnalyzer : public EventSubscriber {
     CellState state;
     std::size_t adjacent_mines;
 
-    CellLoc ds_parent;
+    CellLocation ds_parent;
     std::size_t ds_rank;
   };
 
-  CellLoc Find(const CellLoc& loc) {
+  CellLocation Find(const CellLocation& loc) {
     Cell& cell = grid_(loc.row, loc.col);
     if (cell.ds_parent != loc) {
       cell.ds_parent = Find(cell.ds_parent);
@@ -105,9 +123,9 @@ class RuleAnalyzer : public EventSubscriber {
     return cell.ds_parent;
   }
 
-  void Union(const CellLoc& x, const CellLoc& y) {
-    CellLoc x_root = Find(x);
-    CellLoc y_root = Find(y);
+  void Union(const CellLocation& x, const CellLocation& y) {
+    CellLocation x_root = Find(x);
+    CellLocation y_root = Find(y);
 
     // Already part of the same set.
     if (x_root == y_root) {
@@ -128,10 +146,10 @@ class RuleAnalyzer : public EventSubscriber {
     }
   }
 
-  Rule MakeRule(const CellLoc& loc) {
+  Rule MakeRule(const CellLocation& loc) {
     const Cell& cell = grid_(loc.row, loc.col);
 
-    std::vector<CellLoc> locs;
+    std::vector<CellLocation> locs;
     locs.reserve(cell.adjacent_mines);
     std::size_t flags = 0;
 
@@ -141,7 +159,7 @@ class RuleAnalyzer : public EventSubscriber {
           Cell& cell = grid_(row, col);
           if (cell.state == CellState::COVERED) {
             locs.push_back({row, col});
-            cell.ds_parent = CellLoc{row, col};
+            cell.ds_parent = CellLocation{row, col};
             cell.ds_rank = 0;
           } else if (cell.state == CellState::FLAGGED) {
             ++flags;
@@ -196,7 +214,7 @@ class RuleAnalyzer : public EventSubscriber {
     }
   }
 
-  std::set<CellLoc> cell_loc_;
+  std::set<CellLocation> cell_loc_;
   Grid<Cell> grid_;
 };
 
