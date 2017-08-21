@@ -94,6 +94,8 @@ class ConstraintAnalyzer : public EventSubscriber {
       std::vector<Constraint>& constraints) = 0;
 };
 
+std::unique_ptr<ConstraintAnalyzer> NewConstrantAnalyzer(Game& game);
+
 }  // namespace solver
 }  // namespace mines
 

@@ -12,7 +12,8 @@ namespace {
 
 class ConstraintAnalyzerImpl : public ConstraintAnalyzer {
  public:
-  ConstraintAnalyzerImpl() = default;
+  ConstraintAnalyzerImpl(std::size_t rows, std::size_t cols)
+      : grid_(rows, cols) {}
 
   std::vector<Constraint> AnalyzeConstraints() final {
     std::vector<Constraint> constraints;
@@ -78,15 +79,14 @@ class ConstraintAnalyzerImpl : public ConstraintAnalyzer {
         break;
       case Event::Type::UNFLAG:
         cell.state = CellState::COVERED;
-        grid_.ForEachAdjacent(event.row, event.col,
-                              [this](std::size_t row, std::size_t col) {
-                                const Cell& cell = grid_(row, col);
-                                if (cell.state == CellState::UNCOVERED &&
-                                    cell.adjacent_mines != 0) {
-                                  cell_loc_.insert({row, col});
-                                }
-                                return false;
-                              });
+        grid_.ForEachAdjacent(event.row, event.col, [this](std::size_t row,
+                                                           std::size_t col) {
+          const Cell& cell = grid_(row, col);
+          if (cell.state == CellState::UNCOVERED && cell.adjacent_mines != 0) {
+            cell_loc_.insert({row, col});
+          }
+          return false;
+        });
         break;
       case Event::Type::WIN:
         // No new knowledge.
@@ -105,11 +105,11 @@ class ConstraintAnalyzerImpl : public ConstraintAnalyzer {
 
  private:
   struct Cell {
-    CellState state;
-    std::size_t adjacent_mines;
+    CellState state = CellState::COVERED;
+    std::size_t adjacent_mines = 0;
 
-    CellLocation ds_parent;
-    std::size_t ds_rank;
+    CellLocation ds_parent{0, 0};
+    std::size_t ds_rank = 0;
   };
 
   CellLocation Find(const CellLocation& loc) {
@@ -175,6 +175,13 @@ class ConstraintAnalyzerImpl : public ConstraintAnalyzer {
 };
 
 }  // namespace
+
+std::unique_ptr<ConstraintAnalyzer> NewConstrantAnalyzer(Game& game) {
+  std::unique_ptr<ConstraintAnalyzer> constraint_analyzer{
+      new ConstraintAnalyzerImpl(game.GetRows(), game.GetCols())};
+  game.Subscribe(constraint_analyzer.get());
+  return constraint_analyzer;
+}
 
 }  // namespace solver
 }  // namespace mines
