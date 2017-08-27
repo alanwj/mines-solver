@@ -18,7 +18,7 @@ enum class Algorithm {
   LOCAL,
 };
 
-class Solver : public EventSubscriber {
+class Solver {
  public:
   virtual ~Solver() = default;
 
@@ -33,8 +33,6 @@ class Solver : public EventSubscriber {
 };
 
 // Creates a new solver for the specified algorithm.
-//
-// This solver will be automatically subscribed to the provided game.
 std::unique_ptr<Solver> New(Algorithm alg, Game& game);
 
 }  // namespace solver

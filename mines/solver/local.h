@@ -21,7 +21,7 @@ namespace local {
 //
 // This solver is useful for automating "obvious" actions, but will not find
 // solutions that require reasoning about two or more cells simultaneously.
-std::unique_ptr<Solver> New(const Game& game);
+std::unique_ptr<Solver> New(Game& game);
 
 }  // namespace local
 }  // namespace solver

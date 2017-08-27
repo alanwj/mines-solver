@@ -18,7 +18,6 @@ std::unique_ptr<Solver> New(Algorithm alg, Game& game) {
     default:
       return nullptr;
   }
-  game.Subscribe(solver.get());
   return solver;
 }
 

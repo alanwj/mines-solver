@@ -16,9 +16,6 @@ class NopSolver : public Solver {
   NopSolver() = default;
   ~NopSolver() final = default;
 
-  // Does nothing.
-  void NotifyEvent(const Event&) final {}
-
   std::vector<Action> Analyze() final { return std::vector<Action>(); }
 };
 

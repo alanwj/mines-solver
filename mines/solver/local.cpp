@@ -14,12 +14,14 @@ namespace local {
 
 namespace {
 
-class LocalSolver : public Solver {
+class LocalSolver : public Solver, public EventSubscriber {
  public:
-  LocalSolver(const Game& game) : grid_(game.GetRows(), game.GetCols()) {
+  LocalSolver(Game& game) : grid_(game.GetRows(), game.GetCols()) {
     grid_.ForEach([this](std::size_t row, std::size_t col, Cell& cell) {
       cell.adjacent_covered = CountAdjacentCells(row, col);
     });
+
+    game.Subscribe(this);
   }
 
   ~LocalSolver() final = default;
@@ -179,7 +181,7 @@ class LocalSolver : public Solver {
 
 }  // namespace
 
-std::unique_ptr<Solver> New(const Game& game) {
+std::unique_ptr<Solver> New(Game& game) {
   return MakeUnique<LocalSolver>(game);
 }
 
