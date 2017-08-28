@@ -91,7 +91,7 @@ class ConstraintAnalyzer : public EventSubscriber {
 };
 
 // Returns a new ConstraintAnalyzer.
-std::unique_ptr<ConstraintAnalyzer> NewConstrantAnalyzer(Game& game);
+std::unique_ptr<ConstraintAnalyzer> NewConstraintAnalyzer(Game& game);
 
 }  // namespace solver
 }  // namespace mines

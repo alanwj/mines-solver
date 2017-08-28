@@ -232,7 +232,7 @@ class ConstraintAnalyzerImpl : public ConstraintAnalyzer {
 
 }  // namespace
 
-std::unique_ptr<ConstraintAnalyzer> NewConstrantAnalyzer(Game& game) {
+std::unique_ptr<ConstraintAnalyzer> NewConstraintAnalyzer(Game& game) {
   std::unique_ptr<ConstraintAnalyzer> constraint_analyzer{
       new ConstraintAnalyzerImpl(game.GetRows(), game.GetCols())};
   game.Subscribe(constraint_analyzer.get());
