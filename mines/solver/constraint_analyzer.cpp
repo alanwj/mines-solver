@@ -8,6 +8,7 @@
 
 namespace std {
 
+// Hash function for CellLocation.
 template <>
 struct hash<mines::solver::CellLocation> {
   // This is 2^64 / phi. Any irrational number would do. The goal is just

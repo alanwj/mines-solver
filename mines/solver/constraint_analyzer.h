@@ -68,6 +68,7 @@ class Region {
   std::vector<Constraint> constraints_;
 };
 
+// The result of constraint analysis.
 class ConstraintAnalysis {
  public:
   ConstraintAnalysis() = default;
@@ -75,7 +76,10 @@ class ConstraintAnalysis {
                      std::vector<Region> regions)
       : locations_(std::move(locations)), regions_(std::move(regions)) {}
 
+  // Returns a collection of all locations in all analysis regions.
   const std::vector<CellLocation>& GetLocations() const { return locations_; }
+
+  // Returns the collection of disjoint analysis regions.
   const std::vector<Region>& GetRegions() const { return regions_; }
 
  private:
@@ -83,14 +87,22 @@ class ConstraintAnalysis {
   std::vector<Region> regions_;
 };
 
+// An analyzer that can produce a collection of constraints based on the current
+// state of the game.
+//
+// This analyzer should be subscribed to a game, after which it will
+// automatically stay up to date on the current game state.
 class ConstraintAnalyzer : public EventSubscriber {
  public:
   virtual ~ConstraintAnalyzer() = default;
 
+  // Analyzes the game and produces a collection of constraints.
   virtual ConstraintAnalysis Analyze() = 0;
 };
 
 // Returns a new ConstraintAnalyzer.
+//
+// The analyzer will be subscribed to the provided game.
 std::unique_ptr<ConstraintAnalyzer> NewConstraintAnalyzer(Game& game);
 
 }  // namespace solver
