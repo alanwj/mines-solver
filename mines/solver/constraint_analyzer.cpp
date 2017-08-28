@@ -55,11 +55,15 @@ class CellLocationMap {
 class ConstraintAnalyzerImpl : public ConstraintAnalyzer {
  public:
   ConstraintAnalyzerImpl(std::size_t rows, std::size_t cols)
-      : grid_(rows, cols) {}
+      : grid_(rows, cols), game_over_(false) {}
 
   ~ConstraintAnalyzerImpl() final = default;
 
   ConstraintAnalysis Analyze() final {
+    if (game_over_) {
+      return ConstraintAnalysis();
+    }
+
     // Make all the constraints.
     CellLocationMap location_map(8 * cell_locations_.size());
     std::vector<Constraint> constraints;
@@ -138,9 +142,10 @@ class ConstraintAnalyzerImpl : public ConstraintAnalyzer {
         });
         break;
       case Event::Type::WIN:
-        // No new knowledge.
+        game_over_ = true;
         break;
       case Event::Type::LOSS:
+        game_over_ = true;
         cell.state = CellState::LOSING_MINE;
         break;
       case Event::Type::IDENTIFY_MINE:
@@ -215,13 +220,14 @@ class ConstraintAnalyzerImpl : public ConstraintAnalyzer {
     grid_.ForEachAdjacent(location.row, location.col, f);
 
     std::size_t mines =
-        cell.adjacent_mines <= flags ? cell.adjacent_mines - flags : 0;
+        flags <= cell.adjacent_mines ? cell.adjacent_mines - flags : 0;
 
     return Constraint(std::move(location_indexes), mines);
   }
 
   std::unordered_set<CellLocation> cell_locations_;
   Grid<Cell> grid_;
+  bool game_over_;
 };
 
 }  // namespace

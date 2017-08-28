@@ -70,6 +70,7 @@ class Region {
 
 class ConstraintAnalysis {
  public:
+  ConstraintAnalysis() = default;
   ConstraintAnalysis(std::vector<CellLocation> locations,
                      std::vector<Region> regions)
       : locations_(std::move(locations)), regions_(std::move(regions)) {}
